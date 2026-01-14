@@ -41,6 +41,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Flysha Brand Colors */
+  --color-flysha-black: #080318;
+  --color-flysha-light-purple: #b88dff;
+  --color-flysha-dark-purple: #5a189a;
+  --color-flysha-red: #ff4d4d;
+  --color-flysha-grey: #6b7280;
+  --color-flysha-off-purple: #9090a7;
+  --color-flysha-bg-purple: #0d0620;
 }
 
 :root {
@@ -118,5 +127,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Slide animation for logo carousel */
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }

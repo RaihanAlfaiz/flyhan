@@ -17,8 +17,14 @@ export default async function DashboardLayout({
 }>) {
   const { session, user } = await getUser();
 
-  if (session === null || !user || user.role !== "ADMIN") {
+  // If not logged in, redirect to signin
+  if (session === null || !user) {
     return redirect("/dashboard/signin");
+  }
+
+  // If logged in but not admin (customer), redirect to home
+  if (user.role !== "ADMIN") {
+    return redirect("/");
   }
   return (
     <section>
