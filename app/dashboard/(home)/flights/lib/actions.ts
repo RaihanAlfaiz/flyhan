@@ -6,8 +6,11 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { TypeSeat } from "@prisma/client";
 
-// Generate seat numbers for each class
-function generateSeats(flightId: string) {
+// Generate seats based on configuration
+function generateSeats(
+  flightId: string,
+  config: { economy: number; business: number; first: number }
+) {
   const seats: {
     flightId: string;
     seatNumber: string;
@@ -15,35 +18,30 @@ function generateSeats(flightId: string) {
     isBooked: boolean;
   }[] = [];
 
-  // Economy seats: 20 seats (E1-E20)
-  for (let i = 1; i <= 20; i++) {
-    seats.push({
-      flightId,
-      seatNumber: `E${i}`,
-      type: TypeSeat.ECONOMY,
-      isBooked: false,
-    });
-  }
+  let currentRow = 1;
 
-  // Business seats: 10 seats (B1-B10)
-  for (let i = 1; i <= 10; i++) {
-    seats.push({
-      flightId,
-      seatNumber: `B${i}`,
-      type: TypeSeat.BUSINESS,
-      isBooked: false,
-    });
-  }
+  const generateClassSeats = (count: number, type: TypeSeat) => {
+    for (let i = 0; i < count; i++) {
+      const rowOffset = Math.floor(i / 4);
+      const colIndex = i % 4;
+      const colLabel = ["A", "B", "C", "D"][colIndex];
+      const row = currentRow + rowOffset;
 
-  // First class seats: 5 seats (F1-F5)
-  for (let i = 1; i <= 5; i++) {
-    seats.push({
-      flightId,
-      seatNumber: `F${i}`,
-      type: TypeSeat.FIRST,
-      isBooked: false,
-    });
-  }
+      seats.push({
+        flightId,
+        seatNumber: `${row}${colLabel}`,
+        type,
+        isBooked: false,
+      });
+    }
+    // Update currentRow for next class
+    currentRow += Math.ceil(count / 4);
+  };
+
+  if (config.economy > 0) generateClassSeats(config.economy, TypeSeat.ECONOMY);
+  if (config.business > 0)
+    generateClassSeats(config.business, TypeSeat.BUSINESS);
+  if (config.first > 0) generateClassSeats(config.first, TypeSeat.FIRST);
 
   return seats;
 }
@@ -54,7 +52,13 @@ export async function saveFlight(
 ): Promise<ActionResult> {
   const values = flightFormSchema.safeParse({
     planeId: formData.get("planeId"),
-    price: formData.get("price"),
+    price: formData.get("priceEconomy"), // Use economy price as base price fallback
+    priceEconomy: formData.get("priceEconomy"),
+    priceBusiness: formData.get("priceBusiness"),
+    priceFirst: formData.get("priceFirst"),
+    seatsEconomy: formData.get("seatsEconomy"),
+    seatsBusiness: formData.get("seatsBusiness"),
+    seatsFirst: formData.get("seatsFirst"),
     departureCity: formData.get("departureCity"),
     departureCityCode: formData.get("departureCityCode"),
     departureDate: formData.get("departureDate"),
@@ -92,17 +96,25 @@ export async function saveFlight(
       data: {
         planeId: values.data.planeId,
         price: values.data.price,
+        priceEconomy: values.data.priceEconomy,
+        priceBusiness: values.data.priceBusiness,
+        priceFirst: values.data.priceFirst,
         departureCity: values.data.departureCity,
         departureCityCode: values.data.departureCityCode.toUpperCase(),
         departureDate: values.data.departureDate,
         destinationCity: values.data.destinationCity,
         destinationCityCode: values.data.destinationCityCode.toUpperCase(),
         arrivalDate: values.data.arrivalDate,
-      },
+      } as any,
     });
 
     // Create seats for the flight
-    const seats = generateSeats(flight.id);
+    const seats = generateSeats(flight.id, {
+      economy: values.data.seatsEconomy,
+      business: values.data.seatsBusiness,
+      first: values.data.seatsFirst,
+    });
+
     await prisma.flightSeat.createMany({
       data: seats,
     });

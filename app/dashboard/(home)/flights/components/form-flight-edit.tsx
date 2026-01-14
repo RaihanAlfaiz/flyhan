@@ -149,27 +149,76 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label
-            htmlFor="price"
-            className="flex items-center gap-2 text-gray-700 font-medium"
-          >
-            <DollarSign className="h-4 w-4 text-green-500" />
-            Harga Ticket
-          </Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            placeholder="150000"
-            defaultValue={flight.price}
-            required
-            className="h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-          />
-          <p className="text-xs text-gray-500 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-            💡 Harga untuk kelas business bertambah Rp 500.000 & kelas first
-            bertambah Rp 750.000
-          </p>
+      </div>
+
+      {/* Price Configuration Section */}
+      <div className="relative">
+        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-300 rounded-full" />
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-green-500" />
+          Harga Tiket
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4">
+          <div className="space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <Label
+              htmlFor="priceEconomy"
+              className="text-sm font-medium text-gray-700"
+            >
+              Economy Class
+            </Label>
+            <Input
+              id="priceEconomy"
+              name="priceEconomy"
+              type="number"
+              placeholder="IDR"
+              defaultValue={(flight as any).priceEconomy || flight.price}
+              required
+              className="h-10 bg-white"
+            />
+          </div>
+
+          <div className="space-y-2 p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <Label
+              htmlFor="priceBusiness"
+              className="text-sm font-medium text-purple-700"
+            >
+              Business Class
+            </Label>
+            <Input
+              id="priceBusiness"
+              name="priceBusiness"
+              type="number"
+              placeholder="IDR"
+              defaultValue={
+                (flight as any).priceBusiness ||
+                Math.round(Number(flight.price) * 1.5)
+              }
+              required
+              className="h-10 bg-white"
+            />
+          </div>
+
+          <div className="space-y-2 p-4 bg-amber-50 rounded-xl border border-amber-100">
+            <Label
+              htmlFor="priceFirst"
+              className="text-sm font-medium text-amber-700"
+            >
+              First Class
+            </Label>
+            <Input
+              id="priceFirst"
+              name="priceFirst"
+              type="number"
+              placeholder="IDR"
+              defaultValue={
+                (flight as any).priceFirst ||
+                Math.round(Number(flight.price) * 2.5)
+              }
+              required
+              className="h-10 bg-white"
+            />
+          </div>
         </div>
       </div>
 

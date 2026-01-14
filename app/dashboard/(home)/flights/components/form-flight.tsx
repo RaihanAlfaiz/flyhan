@@ -65,7 +65,7 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
         </div>
       )}
 
-      {/* Row 1: Airplane & Price */}
+      {/* Row 1: Airplane */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label
@@ -89,26 +89,115 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label
-            htmlFor="price"
-            className="flex items-center gap-2 text-gray-700 font-medium"
-          >
-            <DollarSign className="h-4 w-4 text-green-500" />
-            Harga Ticket
-          </Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            placeholder="150000"
-            required
-            className="h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-          />
-          <p className="text-xs text-gray-500 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-            💡 Harga untuk kelas business bertambah Rp 500.000 & kelas first
-            bertambah Rp 750.000
-          </p>
+      </div>
+
+      {/* Seat Configuration Section */}
+      <div className="relative">
+        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-300 rounded-full" />
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-green-500" />
+          Konfigurasi Kursi & Harga
+        </h3>
+
+        <div className="grid grid-cols-1 gap-6 pl-4">
+          {/* Economy Class */}
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h4 className="font-medium text-gray-700 mb-3">Economy Class</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priceEconomy" className="text-sm">
+                  Harga Tiket
+                </Label>
+                <Input
+                  id="priceEconomy"
+                  name="priceEconomy"
+                  type="number"
+                  placeholder="IDR"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="seatsEconomy" className="text-sm">
+                  Jumlah Total Kursi
+                </Label>
+                <Input
+                  id="seatsEconomy"
+                  name="seatsEconomy"
+                  type="number"
+                  placeholder="Contoh: 80"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Business Class */}
+          <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+            <h4 className="font-medium text-purple-700 mb-3">Business Class</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priceBusiness" className="text-sm">
+                  Harga Tiket
+                </Label>
+                <Input
+                  id="priceBusiness"
+                  name="priceBusiness"
+                  type="number"
+                  placeholder="IDR"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="seatsBusiness" className="text-sm">
+                  Jumlah Total Kursi
+                </Label>
+                <Input
+                  id="seatsBusiness"
+                  name="seatsBusiness"
+                  type="number"
+                  placeholder="Contoh: 20"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* First Class */}
+          <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+            <h4 className="font-medium text-amber-700 mb-3">First Class</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priceFirst" className="text-sm">
+                  Harga Tiket
+                </Label>
+                <Input
+                  id="priceFirst"
+                  name="priceFirst"
+                  type="number"
+                  placeholder="IDR"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="seatsFirst" className="text-sm">
+                  Jumlah Total Kursi
+                </Label>
+                <Input
+                  id="seatsFirst"
+                  name="seatsFirst"
+                  type="number"
+                  placeholder="Contoh: 8"
+                  required
+                  className="h-10 bg-white"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

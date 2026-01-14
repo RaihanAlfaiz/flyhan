@@ -78,3 +78,113 @@ export async function getAllCities() {
     return [];
   }
 }
+
+// Search flights with filters
+export interface FlightSearchParams {
+  departureCode?: string;
+  arrivalCode?: string;
+  date?: string;
+  seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
+}
+
+export async function searchFlights(params: FlightSearchParams) {
+  try {
+    const { departureCode, arrivalCode, date, seatType } = params;
+
+    // Build where clause dynamically
+    const whereClause: Record<string, unknown> = {};
+
+    if (departureCode) {
+      whereClause.departureCityCode = departureCode;
+    }
+
+    if (arrivalCode) {
+      whereClause.destinationCityCode = arrivalCode;
+    }
+
+    if (date) {
+      // Filter by date (same day)
+      const searchDate = new Date(date);
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      whereClause.departureDate = {
+        gte: searchDate,
+        lt: nextDay,
+      };
+    }
+
+    // If seat type filter, we need to filter flights that have available seats of that type
+    if (seatType) {
+      whereClause.seats = {
+        some: {
+          type: seatType,
+          OR: [{ isBooked: false }, { isBooked: null }],
+        },
+      };
+    }
+
+    const flights = await prisma.flight.findMany({
+      where: whereClause,
+      include: {
+        plane: true,
+        seats: {
+          where: seatType
+            ? {
+                type: seatType,
+                OR: [{ isBooked: false }, { isBooked: null }],
+              }
+            : {
+                OR: [{ isBooked: false }, { isBooked: null }],
+              },
+        },
+      },
+      orderBy: {
+        departureDate: "asc",
+      },
+    });
+
+    return flights;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}
+
+// Get unique airplanes/airlines for filter
+export async function getAirplanes() {
+  try {
+    const airplanes = await prisma.airplane.findMany({
+      select: {
+        id: true,
+        name: true,
+        code: true,
+      },
+    });
+    return airplanes;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}
+
+// Get flight by ID with all seats
+export async function getFlightById(id: string) {
+  try {
+    const flight = await prisma.flight.findUnique({
+      where: { id },
+      include: {
+        plane: true,
+        seats: {
+          orderBy: {
+            seatNumber: "asc",
+          },
+        },
+      },
+    });
+    return flight;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}

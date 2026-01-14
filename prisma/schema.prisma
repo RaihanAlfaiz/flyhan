@@ -67,6 +67,9 @@ model Flight {
   destinationCity     String
   destinationCityCode String
   price               Int
+  priceEconomy       Int    @default(0)
+  priceBusiness      Int    @default(0)
+  priceFirst         Int    @default(0)
   seats               FlightSeat[]
   tickets             Ticket[]
 }

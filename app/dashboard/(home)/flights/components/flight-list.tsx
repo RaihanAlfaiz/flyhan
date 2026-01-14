@@ -88,13 +88,14 @@ const FlightCard = ({ flight }: FlightCardProps) => {
   };
 
   const getClassPrice = (type: "ECONOMY" | "BUSINESS" | "FIRST") => {
+    const f: any = flight; // Cast to any until prisma client is fully available
     switch (type) {
       case "ECONOMY":
-        return flight.price;
+        return f.priceEconomy || flight.price;
       case "BUSINESS":
-        return flight.price + 500000;
+        return f.priceBusiness || Math.round(Number(flight.price) * 1.5);
       case "FIRST":
-        return flight.price + 750000;
+        return f.priceFirst || Math.round(Number(flight.price) * 2.5);
     }
   };
 

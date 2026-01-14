@@ -1,0 +1,9 @@
+@echo off
+echo Stopping Node processes...
+taskkill /F /IM node.exe
+echo.
+echo Regenerating Prisma Client...
+call npx prisma generate
+echo.
+echo Starting Dev Server...
+npm run dev
