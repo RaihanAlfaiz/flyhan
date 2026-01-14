@@ -3,47 +3,25 @@
 import type { ActionResult } from "@/app/dashboard/(auth)/signin/form/action";
 import { flightFormSchema } from "./validation";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { TypeSeat } from "@prisma/client";
 
 // Generate seats based on configuration
-function generateSeats(
-  flightId: string,
-  config: { economy: number; business: number; first: number }
-) {
-  const seats: {
-    flightId: string;
-    seatNumber: string;
-    type: TypeSeat;
-    isBooked: boolean;
-  }[] = [];
-
-  let currentRow = 1;
-
-  const generateClassSeats = (count: number, type: TypeSeat) => {
-    for (let i = 0; i < count; i++) {
-      const rowOffset = Math.floor(i / 4);
-      const colIndex = i % 4;
-      const colLabel = ["A", "B", "C", "D"][colIndex];
-      const row = currentRow + rowOffset;
-
-      seats.push({
-        flightId,
-        seatNumber: `${row}${colLabel}`,
-        type,
-        isBooked: false,
-      });
-    }
-    // Update currentRow for next class
-    currentRow += Math.ceil(count / 4);
-  };
-
-  if (config.economy > 0) generateClassSeats(config.economy, TypeSeat.ECONOMY);
-  if (config.business > 0)
-    generateClassSeats(config.business, TypeSeat.BUSINESS);
-  if (config.first > 0) generateClassSeats(config.first, TypeSeat.FIRST);
-
-  return seats;
+// Generate seats based on visual configuration
+function generateSeatsFromConfig(flightId: string, seatConfigString: string) {
+  try {
+    const config = JSON.parse(seatConfigString);
+    return config.map((seat: any) => ({
+      flightId,
+      seatNumber: seat.seatNumber,
+      type: seat.type as TypeSeat,
+      isBooked: false,
+    }));
+  } catch (e) {
+    console.error("Failed to parse seat config", e);
+    return [];
+  }
 }
 
 export async function saveFlight(
@@ -56,9 +34,7 @@ export async function saveFlight(
     priceEconomy: formData.get("priceEconomy"),
     priceBusiness: formData.get("priceBusiness"),
     priceFirst: formData.get("priceFirst"),
-    seatsEconomy: formData.get("seatsEconomy"),
-    seatsBusiness: formData.get("seatsBusiness"),
-    seatsFirst: formData.get("seatsFirst"),
+    seatConfig: formData.get("seatConfig"),
     departureCity: formData.get("departureCity"),
     departureCityCode: formData.get("departureCityCode"),
     departureDate: formData.get("departureDate"),
@@ -105,19 +81,17 @@ export async function saveFlight(
         destinationCity: values.data.destinationCity,
         destinationCityCode: values.data.destinationCityCode.toUpperCase(),
         arrivalDate: values.data.arrivalDate,
-      } as any,
+      },
     });
 
-    // Create seats for the flight
-    const seats = generateSeats(flight.id, {
-      economy: values.data.seatsEconomy,
-      business: values.data.seatsBusiness,
-      first: values.data.seatsFirst,
-    });
+    // Create seats for the flight from visual config
+    const seats = generateSeatsFromConfig(flight.id, values.data.seatConfig);
 
-    await prisma.flightSeat.createMany({
-      data: seats,
-    });
+    if (seats.length > 0) {
+      await prisma.flightSeat.createMany({
+        data: seats,
+      });
+    }
   } catch (error) {
     console.error("Error saving flight:", error);
     return {
@@ -129,7 +103,8 @@ export async function saveFlight(
     };
   }
 
-  redirect("/dashboard/flights");
+  revalidatePath("/dashboard/flights");
+  redirect("/dashboard/flights?success=Data berhasil disimpan");
 }
 
 export async function updateFlight(
@@ -139,7 +114,10 @@ export async function updateFlight(
 ): Promise<ActionResult> {
   const values = flightFormSchema.safeParse({
     planeId: formData.get("planeId"),
-    price: formData.get("price"),
+    price: formData.get("priceEconomy"),
+    priceEconomy: formData.get("priceEconomy"),
+    priceBusiness: formData.get("priceBusiness"),
+    priceFirst: formData.get("priceFirst"),
     departureCity: formData.get("departureCity"),
     departureCityCode: formData.get("departureCityCode"),
     departureDate: formData.get("departureDate"),
@@ -176,7 +154,9 @@ export async function updateFlight(
       where: { id },
       data: {
         planeId: values.data.planeId,
-        price: values.data.price,
+        priceEconomy: values.data.priceEconomy,
+        priceBusiness: values.data.priceBusiness,
+        priceFirst: values.data.priceFirst,
         departureCity: values.data.departureCity,
         departureCityCode: values.data.departureCityCode.toUpperCase(),
         departureDate: values.data.departureDate,
@@ -196,7 +176,8 @@ export async function updateFlight(
     };
   }
 
-  redirect("/dashboard/flights");
+  revalidatePath("/dashboard/flights");
+  redirect("/dashboard/flights?success=Data berhasil diupdate");
 }
 
 export async function deleteFlight(id: string): Promise<ActionResult> {

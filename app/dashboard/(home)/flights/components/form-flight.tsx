@@ -8,6 +8,7 @@ import type { ActionResult } from "@/app/dashboard/(auth)/signin/form/action";
 import { saveFlight } from "../lib/actions";
 import { useFormStatus } from "react-dom";
 import { Plane, MapPin, Calendar, DollarSign, ArrowRight } from "lucide-react";
+import SeatLayoutEditor from "./seat-layout-editor";
 
 interface Airplane {
   id: string;
@@ -52,6 +53,7 @@ const SubmitButton = () => {
 
 const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
   const [state, formAction] = useActionState(saveFlight, initialFormState);
+  const [seatConfig, setSeatConfig] = React.useState<string>("[]");
 
   return (
     <form action={formAction} className="w-full space-y-8">
@@ -96,107 +98,71 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
         <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-300 rounded-full" />
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-green-500" />
-          Konfigurasi Kursi & Harga
+          Konfigurasi Harga & Layout Kursi
         </h3>
 
-        <div className="grid grid-cols-1 gap-6 pl-4">
-          {/* Economy Class */}
-          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <h4 className="font-medium text-gray-700 mb-3">Economy Class</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priceEconomy" className="text-sm">
-                  Harga Tiket
-                </Label>
-                <Input
-                  id="priceEconomy"
-                  name="priceEconomy"
-                  type="number"
-                  placeholder="IDR"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seatsEconomy" className="text-sm">
-                  Jumlah Total Kursi
-                </Label>
-                <Input
-                  id="seatsEconomy"
-                  name="seatsEconomy"
-                  type="number"
-                  placeholder="Contoh: 80"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
+        <div className="pl-4 space-y-8">
+          {/* Prices */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label
+                htmlFor="priceEconomy"
+                className="text-sm font-medium text-gray-700"
+              >
+                Harga Tiket Economy
+              </Label>
+              <Input
+                id="priceEconomy"
+                name="priceEconomy"
+                type="number"
+                placeholder="IDR"
+                required
+                className="bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="priceBusiness"
+                className="text-sm font-medium text-purple-700"
+              >
+                Harga Tiket Business
+              </Label>
+              <Input
+                id="priceBusiness"
+                name="priceBusiness"
+                type="number"
+                placeholder="IDR"
+                required
+                className="bg-white border-purple-200 focus:border-purple-500 focus:ring-purple-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="priceFirst"
+                className="text-sm font-medium text-amber-700"
+              >
+                Harga Tiket First Class
+              </Label>
+              <Input
+                id="priceFirst"
+                name="priceFirst"
+                type="number"
+                placeholder="IDR"
+                required
+                className="bg-white border-amber-200 focus:border-amber-500 focus:ring-amber-200"
+              />
             </div>
           </div>
 
-          {/* Business Class */}
-          <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
-            <h4 className="font-medium text-purple-700 mb-3">Business Class</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priceBusiness" className="text-sm">
-                  Harga Tiket
-                </Label>
-                <Input
-                  id="priceBusiness"
-                  name="priceBusiness"
-                  type="number"
-                  placeholder="IDR"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seatsBusiness" className="text-sm">
-                  Jumlah Total Kursi
-                </Label>
-                <Input
-                  id="seatsBusiness"
-                  name="seatsBusiness"
-                  type="number"
-                  placeholder="Contoh: 20"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* First Class */}
-          <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-            <h4 className="font-medium text-amber-700 mb-3">First Class</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priceFirst" className="text-sm">
-                  Harga Tiket
-                </Label>
-                <Input
-                  id="priceFirst"
-                  name="priceFirst"
-                  type="number"
-                  placeholder="IDR"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seatsFirst" className="text-sm">
-                  Jumlah Total Kursi
-                </Label>
-                <Input
-                  id="seatsFirst"
-                  name="seatsFirst"
-                  type="number"
-                  placeholder="Contoh: 8"
-                  required
-                  className="h-10 bg-white"
-                />
-              </div>
-            </div>
+          {/* Visual Editor */}
+          <div className="space-y-4">
+            <Label className="text-gray-700 font-medium">
+              Layout Kursi Pesawat
+            </Label>
+            <SeatLayoutEditor
+              onChange={(seats) => setSeatConfig(JSON.stringify(seats))}
+            />
+            <input type="hidden" name="seatConfig" value={seatConfig} />
           </div>
         </div>
       </div>

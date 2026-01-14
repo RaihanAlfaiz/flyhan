@@ -247,12 +247,34 @@ export default function SeatSelector({
                     <div className="seat-row flex justify-between">
                       {/* Left Column */}
                       <div className="seat-col flex gap-[19px]">
-                        {leftSeats.map(renderSeat)}
+                        {["A", "B"].map((colChar) => {
+                          const seat = row.seats.find((s) =>
+                            s.seatNumber.endsWith(colChar)
+                          );
+                          if (seat) return renderSeat(seat);
+                          return (
+                            <div
+                              key={`placeholder-${row.rowNum}-${colChar}`}
+                              className="w-[60px] h-[60px]"
+                            />
+                          );
+                        })}
                       </div>
 
                       {/* Right Column */}
                       <div className="seat-col flex gap-[19px]">
-                        {rightSeats.map(renderSeat)}
+                        {["C", "D"].map((colChar) => {
+                          const seat = row.seats.find((s) =>
+                            s.seatNumber.endsWith(colChar)
+                          );
+                          if (seat) return renderSeat(seat);
+                          return (
+                            <div
+                              key={`placeholder-${row.rowNum}-${colChar}`}
+                              className="w-[60px] h-[60px]"
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

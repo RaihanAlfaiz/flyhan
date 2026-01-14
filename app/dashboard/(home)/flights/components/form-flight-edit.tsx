@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
+import SeatLayoutEditor, { type SeatConfig } from "./seat-layout-editor";
 
 interface AirplaneSelect {
   id: string;
@@ -79,6 +80,8 @@ function formatDateForInput(date: Date): string {
 const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
   const [flight, setFlight] = useState<FlightWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seatConfig, setSeatConfig] = useState<string>("[]");
+  const [initialSeats, setInitialSeats] = useState<SeatConfig[]>([]);
 
   const updateFlightWithId = updateFlight.bind(null, id);
   const [state, formAction] = useActionState(
@@ -90,6 +93,16 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
     const fetchFlight = async () => {
       const data = await getFlightById(id);
       setFlight(data as FlightWithRelations);
+
+      if (data && data.seats) {
+        const mappedSeats = data.seats.map((s: FlightSeat) => ({
+          seatNumber: s.seatNumber,
+          type: s.type as "ECONOMY" | "BUSINESS" | "FIRST" | "UNAVAILABLE",
+        }));
+        setInitialSeats(mappedSeats);
+        setSeatConfig(JSON.stringify(mappedSeats));
+      }
+
       setLoading(false);
     };
     fetchFlight();
@@ -218,6 +231,25 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
               required
               className="h-10 bg-white"
             />
+          </div>
+        </div>
+
+        {/* Visual Editor */}
+        <div className="px-4 mt-8 mb-4">
+          <Label className="text-gray-700 font-medium mb-4 block">
+            Layout Kursi Pesawat
+          </Label>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <p className="text-sm text-yellow-600 mb-4 bg-yellow-50 p-2 rounded border border-yellow-200">
+              ⚠️ <b>Perhatian:</b> Perubahan layout pada penerbangan yang sudah
+              memiliki pesanan dapat menyebabkan inkonsistensi data. Lakukan
+              dengan hati-hati.
+            </p>
+            <SeatLayoutEditor
+              initialSeats={initialSeats}
+              onChange={(seats) => setSeatConfig(JSON.stringify(seats))}
+            />
+            <input type="hidden" name="seatConfig" value={seatConfig} />
           </div>
         </div>
       </div>

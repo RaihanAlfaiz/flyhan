@@ -6,9 +6,7 @@ export const flightFormSchema = z.object({
   priceEconomy: z.coerce.number().min(0, "Harga Economy harus diisi"),
   priceBusiness: z.coerce.number().min(0, "Harga Business harus diisi"),
   priceFirst: z.coerce.number().min(0, "Harga First Class harus diisi"),
-  seatsEconomy: z.coerce.number().min(0, "Jumlah seat Economy harus diisi"),
-  seatsBusiness: z.coerce.number().min(0, "Jumlah seat Business harus diisi"),
-  seatsFirst: z.coerce.number().min(0, "Jumlah seat First Class harus diisi"),
+  seatConfig: z.string().min(2, "Konfigurasi kursi harus diisi"),
   departureCity: z.string().min(1, "Kota keberangkatan harus diisi"),
   departureCityCode: z
     .string()

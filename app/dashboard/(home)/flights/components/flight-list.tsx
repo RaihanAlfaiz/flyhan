@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { deleteFlight } from "../lib/actions";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import type { Airplane, Flight, FlightSeat } from "@prisma/client";
 import {
   showConfirmDelete,
@@ -285,6 +285,16 @@ interface FlightListProps {
 }
 
 export default function FlightList({ flights }: FlightListProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const successMessage = searchParams.get("success");
+    if (successMessage) {
+      showSuccess("Berhasil", successMessage);
+      router.replace("/dashboard/flights");
+    }
+  }, [searchParams, router]);
   if (flights.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
