@@ -28,6 +28,16 @@ export default async function ChooseSeatPage({
     notFound();
   }
 
+  // Check if flight has already departed
+  if (new Date(flight.departureDate) < new Date()) {
+    redirect(`/available-flights?error=This flight has already departed`);
+  }
+
+  // Check if flight is cancelled
+  if ((flight as any).status === "CANCELLED") {
+    redirect(`/available-flights?error=This flight has been cancelled`);
+  }
+
   // Determine price based on seat type
   // Use explicit casting or fallback logic until Prisma client is fully regenerated
   let price = flight.price;
@@ -50,7 +60,10 @@ export default async function ChooseSeatPage({
           destinationCityCode: flight.destinationCityCode,
           departureDate: flight.departureDate,
           arrivalDate: flight.arrivalDate,
-          price: price, // Pass calculated price
+          price: price, // Calculated initial price
+          priceEconomy: (flight as any).priceEconomy,
+          priceBusiness: (flight as any).priceBusiness,
+          priceFirst: (flight as any).priceFirst,
           plane: flight.plane,
         }}
         seatType={seatType}

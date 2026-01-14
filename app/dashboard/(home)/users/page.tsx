@@ -6,59 +6,84 @@ import { getUsers } from "./lib/data";
 export default async function UsersPage() {
   const users = await getUsers();
 
+  const adminCount = users.filter((u) => u.role === "ADMIN").length;
+  const customerCount = users.filter((u) => u.role === "CUSTOMER").length;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl shadow-lg">
-            <Users className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Users
-            </h1>
-            <p className="text-sm text-gray-500">Kelola data pengguna</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Users</h1>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded shadow border-l-4 border-l-[#4e73df] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-[#4e73df]">
+                Total Users
+              </p>
+              <p className="text-xl font-bold text-gray-800 mt-1">
+                {users.length}
+              </p>
+            </div>
+            <Users className="h-8 w-8 text-gray-300" />
           </div>
         </div>
-
-        {/* Stats */}
-        <div className="flex items-center gap-4">
-          <div className="text-center px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100">
-            <p className="text-2xl font-bold text-blue-600">{users.length}</p>
-            <p className="text-xs text-gray-500">Total Users</p>
+        <div className="bg-white rounded shadow border-l-4 border-l-[#1cc88a] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-[#1cc88a]">
+                Customers
+              </p>
+              <p className="text-xl font-bold text-gray-800 mt-1">
+                {customerCount}
+              </p>
+            </div>
+            <Users className="h-8 w-8 text-gray-300" />
           </div>
-          <div className="text-center px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100">
-            <p className="text-2xl font-bold text-purple-600">
-              {users.filter((u) => u.role === "ADMIN").length}
-            </p>
-            <p className="text-xs text-gray-500">Admin</p>
-          </div>
-          <div className="text-center px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100">
-            <p className="text-2xl font-bold text-emerald-600">
-              {users.filter((u) => u.role === "CUSTOMER").length}
-            </p>
-            <p className="text-xs text-gray-500">Customer</p>
+        </div>
+        <div className="bg-white rounded shadow border-l-4 border-l-[#f6c23e] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-[#f6c23e]">
+                Admins
+              </p>
+              <p className="text-xl font-bold text-gray-800 mt-1">
+                {adminCount}
+              </p>
+            </div>
+            <Users className="h-8 w-8 text-gray-300" />
           </div>
         </div>
       </div>
 
-      {users.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <Users className="h-10 w-10 text-gray-400" />
+      {/* Table Card */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h6 className="text-[#4e73df] font-bold">All Users</h6>
+        </div>
+        {users.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Users className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              No Users Yet
+            </h3>
+            <p className="text-sm text-gray-500">
+              Users will appear after they register.
+            </p>
           </div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            Belum Ada User
-          </h3>
-          <p className="text-gray-500">
-            User akan muncul setelah melakukan registrasi.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <DataTable columns={columns} data={users} />
-        </div>
-      )}
+        ) : (
+          <DataTable
+            columns={columns}
+            data={users}
+            searchPlaceholder="Search users..."
+          />
+        )}
+      </div>
     </div>
   );
 }

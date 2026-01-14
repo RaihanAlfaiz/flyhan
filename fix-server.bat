@@ -1,6 +1,15 @@
 @echo off
 echo Stopping Node processes...
-taskkill /F /IM node.exe
+taskkill /F /IM node.exe >nul 2>&1
+echo.
+echo Cleaning Next.js cache...
+if exist .next rd /s /q .next
+echo.
+echo Pushing DB Schema...
+call npx prisma db push --accept-data-loss
+echo.
+echo Seeding Database...
+call npx prisma db seed
 echo.
 echo Regenerating Prisma Client...
 call npx prisma generate

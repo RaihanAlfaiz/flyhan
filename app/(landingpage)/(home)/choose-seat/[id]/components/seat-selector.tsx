@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 interface Seat {
   id: string;
@@ -20,6 +21,9 @@ interface FlightInfo {
   departureDate: Date | string;
   arrivalDate: Date | string;
   price: number;
+  priceEconomy?: number;
+  priceBusiness?: number;
+  priceFirst?: number;
   plane: {
     id: string;
     name: string;
@@ -78,8 +82,28 @@ export default function SeatSelector({
   seatType,
 }: SeatSelectorProps) {
   const router = useRouter();
-  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get displayed price based on seat type (or average if needed, though usually per seat)
+  const getSeatPrice = (seat: Seat) => {
+    switch (seat.type) {
+      case "ECONOMY":
+        return flight.priceEconomy || flight.price;
+      case "BUSINESS":
+        return flight.priceBusiness || Math.round(flight.price * 1.5);
+      case "FIRST":
+        return flight.priceFirst || Math.round(flight.price * 2.5);
+      default:
+        return flight.price;
+    }
+  };
+
+  // Calculate total price
+  const totalPrice = selectedSeats.reduce(
+    (total, seat) => total + getSeatPrice(seat),
+    0
+  );
 
   // Group seats by row
   const groupedSeats = seats.reduce((acc, seat) => {
@@ -108,14 +132,35 @@ export default function SeatSelector({
   const handleSeatSelect = (seat: Seat) => {
     if (seat.isBooked) return;
     if (seatType && seat.type !== seatType) return;
-    setSelectedSeat(seat);
+
+    // Check if already selected
+    const isAlreadySelected = selectedSeats.some((s) => s.id === seat.id);
+
+    if (isAlreadySelected) {
+      // Remove from selection
+      setSelectedSeats((prev) => prev.filter((s) => s.id !== seat.id));
+    } else {
+      // Add to selection (Max 4 for now)
+      if (selectedSeats.length >= 4) {
+        Swal.fire({
+          icon: "warning",
+          title: "Max Seats Reached",
+          text: "You can only select up to 4 seats per booking.",
+          confirmButtonColor: "#B88DFF",
+        });
+        return;
+      }
+      setSelectedSeats((prev) => [...prev, seat]);
+    }
   };
 
   // Handle continue to book
   const handleContinueToBook = () => {
-    if (!selectedSeat) return;
+    if (selectedSeats.length === 0) return;
     setIsLoading(true);
-    router.push(`/checkout?flightId=${flight.id}&seatId=${selectedSeat.id}`);
+
+    const seatIds = selectedSeats.map((s) => s.id).join(",");
+    router.push(`/passenger-details?flightId=${flight.id}&seatIds=${seatIds}`);
   };
 
   // Get image URL
@@ -134,7 +179,7 @@ export default function SeatSelector({
 
   const renderSeat = (seat: Seat) => {
     const isAllowed = !seatType || seat.type === seatType;
-    const isSelected = selectedSeat?.id === seat.id;
+    const isSelected = selectedSeats.some((s) => s.id === seat.id);
     const isBooked = seat.isBooked === true;
 
     let buttonClass =
@@ -227,17 +272,9 @@ export default function SeatSelector({
             {/* Seat Grid */}
             <div className="flex flex-col gap-5">
               {rowsWithMeta.map((row, index) => {
+                // Determine if this row starts a new class type compared to the previous row
                 const isNewType =
                   index === 0 || rowsWithMeta[index - 1].type !== row.type;
-
-                const leftSeats = row.seats.filter(
-                  (s) =>
-                    s.seatNumber.endsWith("A") || s.seatNumber.endsWith("B")
-                );
-                const rightSeats = row.seats.filter(
-                  (s) =>
-                    s.seatNumber.endsWith("C") || s.seatNumber.endsWith("D")
-                );
 
                 return (
                   <div key={row.rowNum} className="flex flex-col w-full">
@@ -285,7 +322,7 @@ export default function SeatSelector({
         </div>
       </div>
 
-      {/* Sidebar (sama seperti sebelumnya, tidak diubah logicnya) */}
+      {/* Sidebar */}
       <div className="flex flex-col items-center gap-[30px] pb-[30px]">
         <h1 className="font-bold text-[32px] leading-[48px] text-center">
           {flight.departureCity} to {flight.destinationCity}
@@ -367,18 +404,24 @@ export default function SeatSelector({
             </div>
             <div className="flex justify-between">
               <span className="text-flysha-off-purple">Seat Chosen</span>
-              <span className="font-semibold">
-                {selectedSeat ? selectedSeat.seatNumber : "Select a seat"}
+              <span className="font-semibold text-right max-w-[50%] truncate">
+                {selectedSeats.length > 0
+                  ? selectedSeats.map((s) => s.seatNumber).join(", ")
+                  : "Select a seat"}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-flysha-off-purple">Passenger</span>
-              <span className="font-semibold">1 Person</span>
+              <span className="font-semibold">
+                {selectedSeats.length > 0
+                  ? `${selectedSeats.length} Person`
+                  : "0 Person"}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-flysha-off-purple">Seat Price</span>
+              <span className="text-flysha-off-purple">Total Price</span>
               <span className="font-semibold">
-                {formatCurrency(flight.price)}
+                {formatCurrency(totalPrice)}
               </span>
             </div>
           </div>
@@ -386,9 +429,9 @@ export default function SeatSelector({
           {/* Continue Button */}
           <button
             onClick={handleContinueToBook}
-            disabled={!selectedSeat || isLoading}
+            disabled={selectedSeats.length === 0 || isLoading}
             className={`font-bold rounded-full h-12 w-full transition-all duration-300 flex justify-center items-center ${
-              selectedSeat
+              selectedSeats.length > 0
                 ? "text-flysha-black bg-flysha-light-purple hover:shadow-[0_10px_20px_0_#B88DFF]"
                 : "text-gray-400 bg-gray-600 cursor-not-allowed"
             }`}

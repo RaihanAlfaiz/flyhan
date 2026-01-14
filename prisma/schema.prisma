@@ -30,6 +30,23 @@ enum StatusTicket {
   FAILED
 }
 
+enum FlightStatus {
+  SCHEDULED
+  DELAYED
+  CANCELLED
+}
+
+enum RefundType {
+  RESCHEDULE
+  REFUND
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id       String    @id @default(cuid())
   name     String
@@ -70,6 +87,7 @@ model Flight {
   priceEconomy       Int    @default(0)
   priceBusiness      Int    @default(0)
   priceFirst         Int    @default(0)
+  status              FlightStatus @default(SCHEDULED)
   seats               FlightSeat[]
   tickets             Ticket[]
 }
@@ -97,4 +115,38 @@ model Ticket {
   price         BigInt
   status        StatusTicket
   tokenMidtrans String?
+  
+  // Relations for new features
+  passengerId   String?      @unique
+  passenger     Passenger?   @relation(fields: [passengerId], references: [id])
+  promoCodeId   String?
+  promoCode     PromoCode?   @relation(fields: [promoCodeId], references: [id])
+  refundRequests RefundRequest[]
+}
+
+model Passenger {
+  id        String  @id @default(cuid())
+  name      String
+  passport  String?
+  ticket    Ticket?
+}
+
+model PromoCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  discount   Int      @default(0)
+  isActive   Boolean  @default(true)
+  validUntil DateTime?
+  tickets    Ticket[]
+}
+
+model RefundRequest {
+  id          String       @id @default(cuid())
+  ticketId    String
+  ticket      Ticket       @relation(fields: [ticketId], references: [id])
+  type        RefundType
+  reason      String
+  status      RefundStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }

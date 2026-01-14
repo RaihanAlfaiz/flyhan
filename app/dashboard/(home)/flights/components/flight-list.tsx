@@ -7,12 +7,18 @@ import {
   ChevronDown,
   Plane,
   Users,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { deleteFlight } from "../lib/actions";
+import { deleteFlight, updateFlightStatus } from "../lib/actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { Airplane, Flight, FlightSeat } from "@prisma/client";
+import type {
+  Airplane,
+  Flight,
+  FlightSeat,
+  FlightStatus,
+} from "@prisma/client";
 import {
   showConfirmDelete,
   showSuccess,
@@ -20,6 +26,7 @@ import {
   showLoading,
   closeLoading,
 } from "@/lib/sweetalert";
+import Swal from "sweetalert2";
 
 interface FlightWithRelations extends Flight {
   plane: Airplane;
@@ -49,15 +56,47 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat("id-ID").format(price);
 }
 
+const FlightStatusBadge = ({ status }: { status: FlightStatus }) => {
+  const config = {
+    SCHEDULED: {
+      bg: "bg-[#1cc88a]/10",
+      text: "text-[#1cc88a]",
+      label: "Scheduled",
+    },
+    DELAYED: {
+      bg: "bg-[#f6c23e]/10",
+      text: "text-[#f6c23e]",
+      label: "Delayed",
+    },
+    CANCELLED: {
+      bg: "bg-[#e74a3b]/10",
+      text: "text-[#e74a3b]",
+      label: "Cancelled",
+    },
+  };
+
+  const { bg, text, label } = config[status] || config.SCHEDULED;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
+    >
+      {status !== "SCHEDULED" && <AlertCircle className="h-3 w-3" />}
+      {label}
+    </span>
+  );
+};
+
 const FlightCard = ({ flight }: FlightCardProps) => {
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
+  const flightStatus = (flight as any).status || "SCHEDULED";
 
   const handleDelete = async () => {
-    const confirmed = await showConfirmDelete("penerbangan ini");
+    const confirmed = await showConfirmDelete("this flight");
 
     if (confirmed) {
-      showLoading("Menghapus data...");
+      showLoading("Deleting...");
       const result = await deleteFlight(flight.id);
       closeLoading();
 
@@ -70,7 +109,43 @@ const FlightCard = ({ flight }: FlightCardProps) => {
     }
   };
 
-  // Calculate seat availability by class
+  const handleStatusChange = async () => {
+    const { value: newStatus } = await Swal.fire({
+      title: "Update Flight Status",
+      input: "select",
+      inputOptions: {
+        SCHEDULED: "Scheduled (On Time)",
+        DELAYED: "Delayed",
+        CANCELLED: "Cancelled",
+      },
+      inputValue: flightStatus,
+      showCancelButton: true,
+      confirmButtonText: "Update",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#4e73df",
+      inputValidator: (value) => {
+        if (!value) return "Select a status!";
+        return null;
+      },
+    });
+
+    if (newStatus && newStatus !== flightStatus) {
+      showLoading("Updating status...");
+      const result = await updateFlightStatus(
+        flight.id,
+        newStatus as FlightStatus
+      );
+      closeLoading();
+
+      if (result.successTitle) {
+        await showSuccess(result.successTitle, result.successDesc || undefined);
+        router.refresh();
+      } else if (result.errorTitle) {
+        showError(result.errorTitle, result.errorDesc || undefined);
+      }
+    }
+  };
+
   const seatsByClass = {
     ECONOMY: flight.seats.filter((s) => s.type === "ECONOMY"),
     BUSINESS: flight.seats.filter((s) => s.type === "BUSINESS"),
@@ -88,7 +163,7 @@ const FlightCard = ({ flight }: FlightCardProps) => {
   };
 
   const getClassPrice = (type: "ECONOMY" | "BUSINESS" | "FIRST") => {
-    const f: any = flight; // Cast to any until prisma client is fully available
+    const f: any = flight;
     switch (type) {
       case "ECONOMY":
         return f.priceEconomy || flight.price;
@@ -100,125 +175,115 @@ const FlightCard = ({ flight }: FlightCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+    <div
+      className={`bg-white rounded shadow overflow-hidden border-l-4 ${
+        flightStatus === "CANCELLED"
+          ? "border-l-[#e74a3b]"
+          : flightStatus === "DELAYED"
+          ? "border-l-[#f6c23e]"
+          : "border-l-[#1cc88a]"
+      }`}
+    >
       {/* Main Card Content */}
-      <div className="p-5">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+      <div className="p-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           {/* Airplane Info */}
-          <div className="flex items-center gap-4 lg:w-56 flex-shrink-0">
-            <div className="relative">
-              <img
-                src={flight.plane.image}
-                alt={flight.plane.name}
-                className="h-16 w-20 object-cover rounded-xl shadow-sm"
-              />
-            </div>
+          <div className="flex items-center gap-3 lg:w-52 flex-shrink-0">
+            <img
+              src={flight.plane.image}
+              alt={flight.plane.name}
+              className="h-12 w-16 object-cover rounded"
+            />
             <div>
-              <h3 className="font-semibold text-gray-800 line-clamp-2">
+              <h3 className="font-medium text-gray-800 text-sm line-clamp-1">
                 {flight.plane.name}
               </h3>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                {flight.plane.code}
-              </span>
+              <span className="text-xs text-gray-500">{flight.plane.code}</span>
             </div>
           </div>
 
-          {/* Divider for desktop */}
-          <div className="hidden lg:block w-px h-16 bg-gray-200" />
-
           {/* Route Info */}
-          <div className="flex-1 flex items-center justify-center gap-3 py-2">
-            {/* Departure */}
+          <div className="flex-1 flex items-center justify-center gap-3">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-lg font-bold text-gray-800">
                 {flight.departureCityCode}
               </p>
-              <p className="text-sm text-gray-600">{flight.departureCity}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {formatDate(flight.departureDate)}
-              </p>
-              <p className="text-xs font-medium text-blue-600">
+              <p className="text-xs text-gray-500">
                 {formatTime(flight.departureDate)}
               </p>
             </div>
 
-            {/* Flight Path Visual */}
             <div className="flex items-center gap-2 px-4">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <div className="w-16 lg:w-24 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 relative">
-                <Plane className="absolute -top-2 left-1/2 -translate-x-1/2 h-4 w-4 text-purple-500" />
+              <div className="w-2 h-2 rounded-full bg-[#4e73df]" />
+              <div className="w-16 h-0.5 bg-gray-300 relative">
+                <Plane className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 text-[#4e73df]" />
               </div>
-              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              <div className="w-2 h-2 rounded-full bg-[#4e73df]" />
             </div>
 
-            {/* Arrival */}
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-lg font-bold text-gray-800">
                 {flight.destinationCityCode}
               </p>
-              <p className="text-sm text-gray-600">{flight.destinationCity}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {formatDate(flight.arrivalDate)}
-              </p>
-              <p className="text-xs font-medium text-purple-600">
+              <p className="text-xs text-gray-500">
                 {formatTime(flight.arrivalDate)}
               </p>
             </div>
           </div>
 
-          {/* Divider for desktop */}
-          <div className="hidden lg:block w-px h-16 bg-gray-200" />
-
-          {/* Price & Seats Summary */}
-          <div className="lg:w-44 flex-shrink-0 text-center lg:text-left">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Mulai dari
+          {/* Date */}
+          <div className="text-center lg:w-24">
+            <p className="text-xs text-gray-500">
+              {formatDate(flight.departureDate)}
             </p>
-            <p className="text-xl font-bold text-emerald-600">
+          </div>
+
+          {/* Status Badge */}
+          <div className="lg:w-28 text-center">
+            <FlightStatusBadge status={flightStatus} />
+          </div>
+
+          {/* Price */}
+          <div className="lg:w-32 text-center">
+            <p className="text-xs text-gray-500">From</p>
+            <p className="font-bold text-gray-800">
               Rp {formatPrice(flight.price)}
             </p>
-            <div className="flex items-center justify-center lg:justify-start gap-1 mt-1 text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-gray-500">
               <Users className="h-3 w-3" />
-              <span className="text-xs">
-                {getTotalAvailableSeats()} kursi tersedia
-              </span>
+              <span className="text-xs">{getTotalAvailableSeats()} seats</span>
             </div>
           </div>
 
-          {/* Divider for desktop */}
-          <div className="hidden lg:block w-px h-16 bg-gray-200" />
-
           {/* Actions */}
-          <div className="flex items-center justify-center gap-2 lg:w-32 flex-shrink-0">
-            <Button
-              size="sm"
-              asChild
-              className="bg-blue-600 hover:bg-blue-700 shadow-sm"
+          <div className="flex items-center justify-center gap-2 lg:w-40 flex-shrink-0">
+            <button
+              onClick={handleStatusChange}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-[#36b9cc] hover:bg-[#2a96a5] rounded transition-colors"
             >
-              <Link href={`/dashboard/flights/${flight.id}/edit`}>
-                <PencilIcon className="h-4 w-4 mr-1" />
-                Edit
-              </Link>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
+              Status
+            </button>
+            <Link
+              href={`/dashboard/flights/${flight.id}/edit`}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
+            >
+              Edit
+            </Link>
+            <button
               onClick={handleDelete}
-              className="shadow-sm"
+              className="px-2 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
             >
-              <Trash2Icon className="h-4 w-4" />
-            </Button>
+              <Trash2Icon className="h-3 w-3" />
+            </button>
           </div>
         </div>
 
         {/* Expand Button */}
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="w-full mt-4 pt-3 border-t border-dashed border-gray-200 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="w-full mt-3 pt-3 border-t border-dashed border-gray-200 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
-          <span>
-            {showDetails ? "Sembunyikan" : "Lihat"} detail harga & kursi
-          </span>
+          <span>{showDetails ? "Hide" : "Show"} price details</span>
           <ChevronDown
             className={`h-4 w-4 transition-transform duration-200 ${
               showDetails ? "rotate-180" : ""
@@ -229,42 +294,28 @@ const FlightCard = ({ flight }: FlightCardProps) => {
 
       {/* Expanded Details */}
       {showDetails && (
-        <div className="px-5 pb-5 pt-2 bg-gray-50 border-t border-gray-100">
+        <div className="px-4 pb-4 pt-2 bg-gray-50 border-t border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {(["ECONOMY", "BUSINESS", "FIRST"] as const).map((type) => {
               const seats = getAvailableSeats(type);
               const price = getClassPrice(type);
-              const colorClass =
-                type === "ECONOMY"
-                  ? "from-emerald-500 to-teal-500"
-                  : type === "BUSINESS"
-                  ? "from-blue-500 to-indigo-500"
-                  : "from-amber-500 to-orange-500";
-              const bgClass =
-                type === "ECONOMY"
-                  ? "bg-emerald-50 border-emerald-200"
-                  : type === "BUSINESS"
-                  ? "bg-blue-50 border-blue-200"
-                  : "bg-amber-50 border-amber-200";
 
               return (
-                <div key={type} className={`p-4 rounded-xl border ${bgClass}`}>
+                <div key={type} className="p-3 rounded border bg-white">
                   <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`text-sm font-semibold bg-gradient-to-r ${colorClass} bg-clip-text text-transparent`}
-                    >
+                    <span className="text-sm font-medium text-gray-700">
                       {type.charAt(0) + type.slice(1).toLowerCase()} Class
                     </span>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
+                      className={`text-xs px-2 py-0.5 rounded ${
                         seats.available > 5
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-[#1cc88a]/10 text-[#1cc88a]"
                           : seats.available > 0
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-[#f6c23e]/10 text-[#f6c23e]"
+                          : "bg-[#e74a3b]/10 text-[#e74a3b]"
                       }`}
                     >
-                      {seats.available}/{seats.total} kursi
+                      {seats.available}/{seats.total}
                     </span>
                   </div>
                   <p className="text-lg font-bold text-gray-800">
@@ -291,28 +342,29 @@ export default function FlightList({ flights }: FlightListProps) {
   useEffect(() => {
     const successMessage = searchParams.get("success");
     if (successMessage) {
-      showSuccess("Berhasil", successMessage);
+      showSuccess("Success", successMessage);
       router.replace("/dashboard/flights");
     }
   }, [searchParams, router]);
+
   if (flights.length === 0) {
     return (
-      <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-        <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-          <Plane className="h-10 w-10 text-gray-400" />
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <Plane className="h-8 w-8 text-gray-400" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-600 mb-2">
-          Belum Ada Penerbangan
+        <h3 className="text-lg font-semibold text-gray-600 mb-2">
+          No Flights Yet
         </h3>
         <p className="text-gray-500">
-          Klik "Tambah Data" untuk menambahkan penerbangan baru.
+          Click "Add Flight" to create a new flight.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 p-4">
       {flights.map((flight) => (
         <FlightCard key={flight.id} flight={flight} />
       ))}

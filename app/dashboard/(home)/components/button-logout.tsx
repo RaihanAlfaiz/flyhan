@@ -1,36 +1,33 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { logout } from "../actions";
 import Swal from "sweetalert2";
 
 export default function ButtonLogout() {
   return (
-    <Button
-      variant={"destructive"}
-      className="w-full justify-start hover:bg-red-600 transition-colors"
+    <button
+      className="flex w-full items-center gap-2 rounded px-3 py-2.5 text-sm font-medium text-blue-100 transition-all hover:bg-white/10 hover:text-white"
       onClick={async () => {
         const result = await Swal.fire({
           title: "Logout?",
           text: "Anda akan keluar dari aplikasi.",
           icon: "warning",
           showCancelButton: true,
-          confirmButtonColor: "#EF4444",
-          cancelButtonColor: "#6B7280",
+          confirmButtonColor: "#4e73df",
+          cancelButtonColor: "#858796",
           confirmButtonText: "Ya, Logout",
           cancelButtonText: "Batal",
           width: 400,
           padding: "1.5rem",
           customClass: {
-            popup: "rounded-2xl",
-            confirmButton: "rounded-lg px-6 py-2.5 font-medium",
-            cancelButton: "rounded-lg px-6 py-2.5 font-medium",
+            popup: "rounded-lg",
+            confirmButton: "rounded px-6 py-2.5 font-medium",
+            cancelButton: "rounded px-6 py-2.5 font-medium",
           },
         });
 
         if (result.isConfirmed) {
-          // Show loading state
           Swal.fire({
             title: "Logging out...",
             html: "Mohon tunggu sebentar",
@@ -39,7 +36,7 @@ export default function ButtonLogout() {
             width: 300,
             padding: "2rem",
             customClass: {
-              popup: "rounded-2xl",
+              popup: "rounded-lg",
             },
             didOpen: () => {
               Swal.showLoading();
@@ -49,8 +46,8 @@ export default function ButtonLogout() {
         }
       }}
     >
-      <LogOut className="mr-2 w-4 h-4" />
+      <LogOut className="h-4 w-4" />
       Logout
-    </Button>
+    </button>
   );
 }

@@ -4,12 +4,10 @@ import {
   Plane,
   Users,
   Ticket,
-  TrendingUp,
   CalendarDays,
   ArrowRight,
-  User,
+  DollarSign,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 function formatCurrency(amount: bigint | number) {
@@ -30,7 +28,7 @@ function formatDate(date: Date) {
 }
 
 export default async function DashboardPage() {
-  const user = await getUser();
+  const { user } = await getUser();
 
   // Statistics Data
   const [
@@ -39,6 +37,7 @@ export default async function DashboardPage() {
     ticketCount,
     customerCount,
     recentTickets,
+    totalRevenue,
   ] = await Promise.all([
     prisma.airplane.count(),
     prisma.flight.count({
@@ -58,190 +57,189 @@ export default async function DashboardPage() {
         seat: true,
       },
     }),
+    prisma.ticket.aggregate({
+      where: { status: "SUCCESS" },
+      _sum: { price: true },
+    }),
   ]);
 
   const stats = [
     {
-      label: "Total Pesawat",
-      value: airplaneCount,
-      icon: Plane,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-100",
-      desc: "Armada tersedia",
+      label: "Total Revenue",
+      value: formatCurrency(totalRevenue._sum.price || 0),
+      icon: DollarSign,
+      borderColor: "border-l-[#4e73df]",
+      textColor: "text-[#4e73df]",
     },
     {
-      label: "Penerbangan Aktif",
+      label: "Total Flights",
       value: flightCount,
       icon: CalendarDays,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-purple-100",
-      desc: "Jadwal mendatang",
+      borderColor: "border-l-[#1cc88a]",
+      textColor: "text-[#1cc88a]",
     },
     {
-      label: "Tiket Terjual",
+      label: "Tickets Sold",
       value: ticketCount,
       icon: Ticket,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-100",
-      desc: "Transaksi sukses",
+      borderColor: "border-l-[#36b9cc]",
+      textColor: "text-[#36b9cc]",
     },
     {
-      label: "Total Pelanggan",
+      label: "Total Customers",
       value: customerCount,
       icon: Users,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-100",
-      desc: "User terdaftar",
+      borderColor: "border-l-[#f6c23e]",
+      textColor: "text-[#f6c23e]",
     },
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">
-          Selamat Datang, {user?.name || "Admin"} 👋
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Berikut adalah ringkasan performa bisnis penerbangan hari ini.
-        </p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <Link
+          href="/dashboard/flights/create"
+          className="inline-flex items-center gap-2 rounded bg-[#4e73df] px-4 py-2 text-sm font-medium text-white hover:bg-[#2e59d9] transition-colors"
+        >
+          <Plane className="h-4 w-4" />
+          Add New Flight
+        </Link>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Cards - SB Admin 2 Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
+            className={`bg-white rounded shadow border-l-4 ${stat.borderColor} p-4`}
           >
-            <div className="flex justify-between items-start">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">
+                <p className={`text-xs font-bold uppercase ${stat.textColor}`}>
                   {stat.label}
                 </p>
-                <h3 className="text-3xl font-bold text-gray-800 mt-2">
+                <p className="text-xl font-bold text-gray-800 mt-1">
                   {stat.value}
-                </h3>
+                </p>
               </div>
-              <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2">
-              <span
-                className={`text-xs px-2 py-1 rounded-full font-medium ${stat.bg} ${stat.color} bg-opacity-50`}
-              >
-                {stat.desc}
-              </span>
+              <stat.icon className="h-8 w-8 text-gray-300" />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Recent Transactions Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Recent Transactions Table */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">
-                Transaksi Terbaru
-              </h2>
-              <p className="text-sm text-gray-500">
-                5 tiket terakhir yang berhasil dibooking
-              </p>
-            </div>
+      {/* Content Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Transactions */}
+        <div className="lg:col-span-2 bg-white rounded shadow">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h6 className="text-[#4e73df] font-bold">Recent Transactions</h6>
             <Link
               href="/dashboard/tickets"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 group"
+              className="text-sm text-gray-500 hover:text-[#4e73df] flex items-center gap-1"
             >
-              Lihat Semua
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              View All <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-
-          <div className="space-y-4">
+          <div className="p-6">
             {recentTickets.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                Belum ada transaksi tiket.
+              <div className="text-center py-8 text-gray-400">
+                No transactions yet.
               </div>
             ) : (
-              recentTickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-100"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                      <User className="h-5 w-5" />
+              <div className="space-y-4">
+                {recentTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#4e73df] flex items-center justify-center text-white text-sm font-bold">
+                        {ticket.customer.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm">
+                          {ticket.customer.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {ticket.flight.plane.code} • Seat{" "}
+                          {ticket.seat.seatNumber}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">
-                        {ticket.customer.name}
+                    <div className="text-right">
+                      <p className="font-bold text-gray-800 text-sm">
+                        {formatCurrency(ticket.price)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {ticket.flight.plane.code} • {ticket.seat.seatNumber}
+                        {formatDate(ticket.bookingDate)}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-800 text-sm">
-                      {formatCurrency(ticket.price)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(ticket.bookingDate)}
-                    </p>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right: Quick Actions or Promo Banner */}
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Plane className="h-32 w-32" />
-            </div>
-            <h3 className="text-xl font-bold mb-2 relative z-10">
-              Tambah Penerbangan Baru
-            </h3>
-            <p className="text-indigo-100 text-sm mb-6 relative z-10">
-              Jadwalkan rute penerbangan baru untuk pelanggan.
-            </p>
-            <Link href="/dashboard/flights/create">
-              <button className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-indigo-50 transition-colors w-full relative z-10">
-                + Buat Penerbangan
-              </button>
-            </Link>
+        {/* Quick Stats */}
+        <div className="bg-white rounded shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h6 className="text-[#4e73df] font-bold">Quick Stats</h6>
           </div>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Total Airplanes</span>
+              <span className="text-sm font-bold text-gray-800">
+                {airplaneCount}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-[#4e73df] h-2 rounded-full"
+                style={{ width: "100%" }}
+              ></div>
+            </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="font-bold text-gray-800 mb-4">Status Integrasi</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-sm text-gray-600">Database System</span>
-                </div>
-                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                  Online
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-sm text-gray-600">Payment Gateway</span>
-                </div>
-                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                  Connected
-                </span>
-              </div>
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-600">Active Flights</span>
+              <span className="text-sm font-bold text-gray-800">
+                {flightCount}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-[#1cc88a] h-2 rounded-full"
+                style={{ width: "80%" }}
+              ></div>
+            </div>
+
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-600">Tickets Sold</span>
+              <span className="text-sm font-bold text-gray-800">
+                {ticketCount}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-[#36b9cc] h-2 rounded-full"
+                style={{ width: "60%" }}
+              ></div>
+            </div>
+
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-600">Registered Users</span>
+              <span className="text-sm font-bold text-gray-800">
+                {customerCount}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-[#f6c23e] h-2 rounded-full"
+                style={{ width: "45%" }}
+              ></div>
             </div>
           </div>
         </div>

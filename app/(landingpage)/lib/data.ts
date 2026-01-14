@@ -92,7 +92,16 @@ export async function searchFlights(params: FlightSearchParams) {
     const { departureCode, arrivalCode, date, seatType } = params;
 
     // Build where clause dynamically
-    const whereClause: Record<string, unknown> = {};
+    const whereClause: Record<string, unknown> = {
+      // Only show flights that haven't departed yet
+      departureDate: {
+        gte: new Date(),
+      },
+      // Exclude cancelled flights
+      status: {
+        not: "CANCELLED",
+      },
+    };
 
     if (departureCode) {
       whereClause.departureCityCode = departureCode;
@@ -103,13 +112,17 @@ export async function searchFlights(params: FlightSearchParams) {
     }
 
     if (date) {
-      // Filter by date (same day)
+      // Filter by date (same day) but still must be in the future
       const searchDate = new Date(date);
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
 
+      // Only search if date is in the future
+      const now = new Date();
+      const startDate = searchDate > now ? searchDate : now;
+
       whereClause.departureDate = {
-        gte: searchDate,
+        gte: startDate,
         lt: nextDay,
       };
     }

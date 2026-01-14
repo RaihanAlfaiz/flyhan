@@ -9,8 +9,7 @@ import type {
   StatusTicket,
 } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Trash2Icon, CheckCircle, XCircle, Clock, Plane } from "lucide-react";
+import { Trash2, Plane, RefreshCw } from "lucide-react";
 import { deleteTicket, updateTicketStatus } from "../lib/actions";
 import { useRouter } from "next/navigation";
 import {
@@ -37,38 +36,26 @@ function formatDate(date: Date): string {
 }
 
 function formatPrice(price: bigint | number): string {
-  return new Intl.NumberFormat("id-ID").format(Number(price));
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(Number(price));
 }
 
 const StatusBadge = ({ status }: { status: StatusTicket }) => {
   const config = {
-    PENDING: {
-      bg: "bg-amber-100",
-      text: "text-amber-700",
-      border: "border-amber-200",
-      icon: Clock,
-    },
-    SUCCESS: {
-      bg: "bg-emerald-100",
-      text: "text-emerald-700",
-      border: "border-emerald-200",
-      icon: CheckCircle,
-    },
-    FAILED: {
-      bg: "bg-red-100",
-      text: "text-red-700",
-      border: "border-red-200",
-      icon: XCircle,
-    },
+    PENDING: { bg: "bg-[#f6c23e]/10", text: "text-[#f6c23e]" },
+    SUCCESS: { bg: "bg-[#1cc88a]/10", text: "text-[#1cc88a]" },
+    FAILED: { bg: "bg-[#e74a3b]/10", text: "text-[#e74a3b]" },
   };
 
-  const { bg, text, border, icon: Icon } = config[status];
+  const { bg, text } = config[status];
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${bg} ${text} ${border}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
     >
-      <Icon className="h-3 w-3" />
       {status}
     </span>
   );
@@ -76,9 +63,9 @@ const StatusBadge = ({ status }: { status: StatusTicket }) => {
 
 const SeatTypeBadge = ({ type }: { type: string }) => {
   const config: Record<string, { bg: string; text: string }> = {
-    ECONOMY: { bg: "bg-emerald-100", text: "text-emerald-700" },
-    BUSINESS: { bg: "bg-blue-100", text: "text-blue-700" },
-    FIRST: { bg: "bg-amber-100", text: "text-amber-700" },
+    ECONOMY: { bg: "bg-[#1cc88a]/10", text: "text-[#1cc88a]" },
+    BUSINESS: { bg: "bg-[#4e73df]/10", text: "text-[#4e73df]" },
+    FIRST: { bg: "bg-[#f6c23e]/10", text: "text-[#f6c23e]" },
   };
 
   const { bg, text } = config[type] || {
@@ -98,7 +85,7 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
 
   const handleStatusChange = async () => {
     const { value: newStatus } = await Swal.fire({
-      title: "Ubah Status Tiket",
+      title: "Update Ticket Status",
       input: "select",
       inputOptions: {
         PENDING: "Pending",
@@ -108,18 +95,16 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
       inputValue: ticket.status,
       showCancelButton: true,
       confirmButtonText: "Update",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#3b82f6",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#4e73df",
       inputValidator: (value) => {
-        if (!value) {
-          return "Pilih status!";
-        }
+        if (!value) return "Select a status!";
         return null;
       },
     });
 
     if (newStatus && newStatus !== ticket.status) {
-      showLoading("Mengupdate status...");
+      showLoading("Updating status...");
       const result = await updateTicketStatus(
         ticket.id,
         newStatus as StatusTicket
@@ -136,10 +121,10 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
   };
 
   const handleDelete = async () => {
-    const confirmed = await showConfirmDelete(`tiket ${ticket.code}`);
+    const confirmed = await showConfirmDelete(`ticket ${ticket.code}`);
 
     if (confirmed) {
-      showLoading("Menghapus tiket...");
+      showLoading("Deleting ticket...");
       const result = await deleteTicket(ticket.id);
       closeLoading();
 
@@ -154,17 +139,20 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         onClick={handleStatusChange}
-        className="text-xs"
+        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
       >
+        <RefreshCw className="h-3 w-3" />
         Status
-      </Button>
-      <Button variant="destructive" size="sm" onClick={handleDelete}>
-        <Trash2Icon className="h-4 w-4" />
-      </Button>
+      </button>
+      <button
+        onClick={handleDelete}
+        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
+      >
+        <Trash2 className="h-3 w-3" />
+        Delete
+      </button>
     </div>
   );
 };
@@ -172,18 +160,16 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
 export const columns: ColumnDef<TicketWithRelations>[] = [
   {
     accessorKey: "code",
-    header: () => (
-      <span className="font-semibold text-gray-700">Kode Tiket</span>
-    ),
+    header: "Ticket Code",
     cell: ({ row }) => (
-      <span className="font-mono font-bold text-blue-600">
+      <span className="font-mono font-bold text-[#4e73df]">
         {row.getValue("code")}
       </span>
     ),
   },
   {
     accessorKey: "customer",
-    header: () => <span className="font-semibold text-gray-700">Customer</span>,
+    header: "Customer",
     cell: ({ row }) => {
       const customer = row.original.customer;
       return (
@@ -196,14 +182,12 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
   },
   {
     accessorKey: "flight",
-    header: () => (
-      <span className="font-semibold text-gray-700">Penerbangan</span>
-    ),
+    header: "Flight",
     cell: ({ row }) => {
       const flight = row.original.flight;
       return (
         <div className="flex items-center gap-2">
-          <Plane className="h-4 w-4 text-blue-500" />
+          <Plane className="h-4 w-4 text-[#4e73df]" />
           <div>
             <p className="font-medium text-gray-800">
               {flight.departureCityCode} → {flight.destinationCityCode}
@@ -218,7 +202,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
   },
   {
     accessorKey: "seat",
-    header: () => <span className="font-semibold text-gray-700">Kursi</span>,
+    header: "Seat",
     cell: ({ row }) => {
       const seat = row.original.seat;
       return (
@@ -231,23 +215,21 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
   },
   {
     accessorKey: "price",
-    header: () => <span className="font-semibold text-gray-700">Harga</span>,
+    header: "Price",
     cell: ({ row }) => (
-      <span className="font-semibold text-emerald-600">
-        Rp {formatPrice(row.original.price)}
+      <span className="font-semibold text-gray-800">
+        {formatPrice(row.original.price)}
       </span>
     ),
   },
   {
     accessorKey: "status",
-    header: () => <span className="font-semibold text-gray-700">Status</span>,
+    header: "Status",
     cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
   },
   {
     accessorKey: "bookingDate",
-    header: () => (
-      <span className="font-semibold text-gray-700">Tanggal Booking</span>
-    ),
+    header: "Booking Date",
     cell: ({ row }) => (
       <span className="text-gray-600 text-sm">
         {formatDate(row.original.bookingDate)}
@@ -256,7 +238,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
   },
   {
     id: "actions",
-    header: () => <span className="font-semibold text-gray-700">Aksi</span>,
+    header: "Actions",
     cell: ({ row }) => <ActionButtons ticket={row.original} />,
   },
 ];

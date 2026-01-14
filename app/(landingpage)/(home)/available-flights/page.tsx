@@ -93,6 +93,7 @@ interface PageProps {
     arrival?: string;
     date?: string;
     seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
+    error?: string;
   }>;
 }
 
@@ -100,7 +101,7 @@ export default async function AvailableFlightsPage({
   searchParams,
 }: PageProps) {
   const params = await searchParams;
-  const { departure, arrival, date, seatType } = params;
+  const { departure, arrival, date, seatType, error } = params;
 
   // Fetch flights based on search params
   const flights = await searchFlights({
@@ -146,6 +147,26 @@ export default async function AvailableFlightsPage({
         id="Content"
         className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-[105px]"
       >
+        {error && (
+          <div className="bg-red-500 text-white p-4 rounded-xl mb-6 shadow-lg flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="font-medium">{error}</span>
+          </div>
+        )}
+
         <div className="flex w-full gap-8">
           {/* Filters Sidebar */}
           <FlightFilters

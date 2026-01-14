@@ -2,8 +2,7 @@
 
 import { Airplane } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { deleteAirplane } from "../lib/actions";
 import { useRouter } from "next/navigation";
@@ -19,10 +18,10 @@ const DeleteButton = ({ id, name }: { id: string; name: string }) => {
   const router = useRouter();
 
   const handleDelete = async () => {
-    const confirmed = await showConfirmDelete(`pesawat "${name}"`);
+    const confirmed = await showConfirmDelete(`airplane "${name}"`);
 
     if (confirmed) {
-      showLoading("Menghapus data...");
+      showLoading("Deleting...");
       const result = await deleteAirplane(id);
       closeLoading();
 
@@ -36,71 +35,61 @@ const DeleteButton = ({ id, name }: { id: string; name: string }) => {
   };
 
   return (
-    <Button
-      variant="destructive"
-      size="sm"
+    <button
       onClick={handleDelete}
-      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-md hover:shadow-lg transition-all duration-200"
+      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
     >
-      <Trash2Icon className="h-4 w-4" />
-    </Button>
+      <Trash2 className="h-3 w-3" />
+      Delete
+    </button>
   );
 };
 
 export const columns: ColumnDef<Airplane>[] = [
   {
     accessorKey: "image",
-    header: () => <span className="font-semibold text-gray-700">Image</span>,
+    header: "Image",
     cell: ({ row }) => {
       const imageUrl = row.getValue("image") as string;
       return (
-        <div className="relative group">
-          <img
-            src={imageUrl}
-            alt={row.getValue("name") as string}
-            className="h-14 w-20 object-cover rounded-lg shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </div>
+        <img
+          src={imageUrl}
+          alt={row.getValue("name") as string}
+          className="h-10 w-16 object-cover rounded"
+        />
       );
     },
   },
-
   {
     accessorKey: "name",
-    header: () => <span className="font-semibold text-gray-700">Name</span>,
+    header: "Name",
     cell: ({ row }) => (
       <span className="font-medium text-gray-800">{row.getValue("name")}</span>
     ),
   },
-
   {
     accessorKey: "code",
-    header: () => <span className="font-semibold text-gray-700">Code</span>,
+    header: "Code",
     cell: ({ row }) => (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-[#4e73df]/10 text-[#4e73df]">
         {row.getValue("code")}
       </span>
     ),
   },
-
   {
     id: "actions",
-    header: () => <span className="font-semibold text-gray-700">Actions</span>,
+    header: "Actions",
     cell: ({ row }) => {
       const plane = row.original;
       return (
-        <div className="flex flex-row items-center justify-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            asChild
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 shadow-md hover:shadow-lg transition-all duration-200"
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/dashboard/airplanes/${plane.id}/edit`}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
           >
-            <Link href={`/dashboard/airplanes/${plane.id}/edit`}>
-              <PencilIcon className="h-4 w-4" />
-            </Link>
-          </Button>
+            <Pencil className="h-3 w-3" />
+            Edit
+          </Link>
           <DeleteButton id={plane.id} name={plane.name} />
         </div>
       );

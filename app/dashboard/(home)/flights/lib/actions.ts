@@ -29,18 +29,18 @@ export async function saveFlight(
   formData: FormData
 ): Promise<ActionResult> {
   const values = flightFormSchema.safeParse({
-    planeId: formData.get("planeId"),
-    price: formData.get("priceEconomy"), // Use economy price as base price fallback
-    priceEconomy: formData.get("priceEconomy"),
-    priceBusiness: formData.get("priceBusiness"),
-    priceFirst: formData.get("priceFirst"),
-    seatConfig: formData.get("seatConfig"),
-    departureCity: formData.get("departureCity"),
-    departureCityCode: formData.get("departureCityCode"),
-    departureDate: formData.get("departureDate"),
-    destinationCity: formData.get("destinationCity"),
-    destinationCityCode: formData.get("destinationCityCode"),
-    arrivalDate: formData.get("arrivalDate"),
+    planeId: formData.get("planeId") ?? "",
+    price: formData.get("priceEconomy") ?? 0, // Use economy price as base price fallback
+    priceEconomy: formData.get("priceEconomy") ?? 0,
+    priceBusiness: formData.get("priceBusiness") ?? 0,
+    priceFirst: formData.get("priceFirst") ?? 0,
+    seatConfig: formData.get("seatConfig") ?? "[]",
+    departureCity: formData.get("departureCity") ?? "",
+    departureCityCode: formData.get("departureCityCode") ?? "",
+    departureDate: formData.get("departureDate") ?? "",
+    destinationCity: formData.get("destinationCity") ?? "",
+    destinationCityCode: formData.get("destinationCityCode") ?? "",
+    arrivalDate: formData.get("arrivalDate") ?? "",
   });
 
   if (!values.success) {
@@ -112,24 +112,35 @@ export async function updateFlight(
   prevState: any,
   formData: FormData
 ): Promise<ActionResult> {
+  // Debug log to trace validation issues
+  console.log("Update Flight ID:", id);
+  /* 
+  Uncomment to debug raw data if needed
+  const rawData = Object.fromEntries(formData.entries());
+  console.log("Update Flight Input:", rawData); 
+  */
+
   const values = flightFormSchema.safeParse({
-    planeId: formData.get("planeId"),
-    price: formData.get("priceEconomy"),
-    priceEconomy: formData.get("priceEconomy"),
-    priceBusiness: formData.get("priceBusiness"),
-    priceFirst: formData.get("priceFirst"),
-    departureCity: formData.get("departureCity"),
-    departureCityCode: formData.get("departureCityCode"),
-    departureDate: formData.get("departureDate"),
-    destinationCity: formData.get("destinationCity"),
-    destinationCityCode: formData.get("destinationCityCode"),
-    arrivalDate: formData.get("arrivalDate"),
+    planeId: formData.get("planeId") ?? "",
+    price: formData.get("priceEconomy") ?? 0,
+    priceEconomy: formData.get("priceEconomy") ?? 0,
+    priceBusiness: formData.get("priceBusiness") ?? 0,
+    priceFirst: formData.get("priceFirst") ?? 0,
+    seatConfig: formData.get("seatConfig") ?? "[]",
+    departureCity: formData.get("departureCity") ?? "",
+    departureCityCode: formData.get("departureCityCode") ?? "",
+    departureDate: formData.get("departureDate") ?? "",
+    destinationCity: formData.get("destinationCity") ?? "",
+    destinationCityCode: formData.get("destinationCityCode") ?? "",
+    arrivalDate: formData.get("arrivalDate") ?? "",
   });
 
   if (!values.success) {
     const errorDesc = values.error.issues
       .map((issue) => issue.message)
       .join(", ");
+
+    console.log("Validation Error:", errorDesc);
 
     return {
       errorTitle: "Error Validation",
@@ -229,6 +240,36 @@ export async function deleteFlight(id: string): Promise<ActionResult> {
       errorTitle: "Gagal Menghapus Data",
       errorDesc:
         "Terjadi kesalahan saat menghapus data penerbangan. Silakan coba lagi.",
+      successTitle: null,
+      successDesc: null,
+    };
+  }
+}
+
+export async function updateFlightStatus(
+  id: string,
+  status: "SCHEDULED" | "DELAYED" | "CANCELLED"
+): Promise<ActionResult> {
+  try {
+    await prisma.flight.update({
+      where: { id },
+      data: { status },
+    });
+
+    revalidatePath("/dashboard/flights");
+    revalidatePath("/my-tickets");
+
+    return {
+      errorTitle: null,
+      errorDesc: null,
+      successTitle: "Success",
+      successDesc: `Flight status updated to ${status}`,
+    };
+  } catch (error) {
+    console.error("Error updating flight status:", error);
+    return {
+      errorTitle: "Failed to Update",
+      errorDesc: "An error occurred while updating flight status.",
       successTitle: null,
       successDesc: null,
     };

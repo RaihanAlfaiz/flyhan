@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Flyhan",
+  title: "FlyHan",
   description: "Flight booking application",
 };
 

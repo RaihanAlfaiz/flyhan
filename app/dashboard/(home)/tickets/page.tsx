@@ -8,37 +8,36 @@ export default async function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg">
-            <Ticket className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Tickets
-            </h1>
-            <p className="text-sm text-gray-500">Kelola tiket penerbangan</p>
-          </div>
-        </div>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Tickets</h1>
       </div>
 
-      {tickets.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <Ticket className="h-10 w-10 text-gray-400" />
+      {/* Table Card */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h6 className="text-[#4e73df] font-bold">All Tickets</h6>
+        </div>
+        {tickets.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Ticket className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              No Tickets Yet
+            </h3>
+            <p className="text-sm text-gray-500">
+              Tickets will appear after customers make bookings.
+            </p>
           </div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            Belum Ada Tiket
-          </h3>
-          <p className="text-gray-500">
-            Tiket akan muncul setelah customer melakukan pemesanan.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <DataTable columns={columns} data={tickets as any} />
-        </div>
-      )}
+        ) : (
+          <DataTable
+            columns={columns}
+            data={tickets as any}
+            searchPlaceholder="Search tickets..."
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { getAirplanesForSelect } from "../../lib/data";
 import FormFlightEdit from "../../components/form-flight-edit";
-import { Plane, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 interface EditFlightPageProps {
@@ -12,29 +11,26 @@ export default async function EditFlightPage({ params }: EditFlightPageProps) {
   const airplanes = await getAirplanesForSelect();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Edit Flight</h1>
         <Link
           href="/dashboard/flights"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
+          ← Back to List
         </Link>
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-lg">
-            <Plane className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Edit Flight
-            </h1>
-            <p className="text-sm text-gray-500">Update data penerbangan</p>
-          </div>
-        </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-        <FormFlightEdit id={id} airplanes={airplanes} />
+      {/* Form Card */}
+      <div className="bg-white rounded shadow">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h6 className="text-[#4e73df] font-bold">Flight Details</h6>
+        </div>
+        <div className="p-6">
+          <FormFlightEdit id={id} airplanes={airplanes} />
+        </div>
       </div>
     </div>
   );

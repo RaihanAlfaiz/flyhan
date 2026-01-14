@@ -12,7 +12,7 @@ function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
       <Link href="/" className="flex items-center shrink-0">
         <Image
           src="/assets/images/logos/logo.svg"
-          alt="Flyhan Logo"
+          alt="FlyHan Logo"
           width={120}
           height={40}
           priority

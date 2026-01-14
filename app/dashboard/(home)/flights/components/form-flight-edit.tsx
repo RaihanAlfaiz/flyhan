@@ -2,21 +2,13 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import React, { useActionState, useEffect, useState, type FC } from "react";
 import type { ActionResult } from "@/app/dashboard/(auth)/signin/form/action";
 import { updateFlight } from "../lib/actions";
 import { getFlightById } from "../lib/data";
 import { useFormStatus } from "react-dom";
 import type { Flight, Airplane, FlightSeat } from "@prisma/client";
-import {
-  Plane,
-  MapPin,
-  Calendar,
-  DollarSign,
-  ArrowRight,
-  Loader2,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import SeatLayoutEditor, { type SeatConfig } from "./seat-layout-editor";
 
 interface AirplaneSelect {
@@ -46,27 +38,16 @@ const SubmitButton = () => {
   const { pending } = useFormStatus();
 
   return (
-    <Button
+    <button
       disabled={pending}
-      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 py-6 text-lg font-semibold"
       type="submit"
+      className="px-4 py-2 bg-[#4e73df] hover:bg-[#2e59d9] text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
     >
-      {pending ? (
-        <span className="flex items-center gap-2">
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Menyimpan...
-        </span>
-      ) : (
-        <span className="flex items-center gap-2">
-          <Plane className="h-5 w-5" />
-          Update
-        </span>
-      )}
-    </Button>
+      {pending ? "Updating..." : "Update Flight"}
+    </button>
   );
 };
 
-// Format date for datetime-local input
 function formatDateForInput(date: Date): string {
   const d = new Date(date);
   const year = d.getFullYear();
@@ -111,7 +92,7 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#4e73df]" />
       </div>
     );
   }
@@ -119,169 +100,157 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
   if (!flight) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <Plane className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-        <p>Penerbangan tidak ditemukan</p>
+        <p>Flight not found</p>
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="w-full space-y-8">
+    <form action={formAction} className="space-y-6">
       {state.errorTitle && (
-        <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-red-700 rounded-xl shadow-sm">
-          <strong className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-red-500 rounded-full" />
-            {state.errorTitle}
-          </strong>
-          {state.errorDesc && <p className="mt-1 text-sm">{state.errorDesc}</p>}
+        <div className="p-3 bg-[#e74a3b]/10 border border-[#e74a3b]/20 text-[#e74a3b] rounded text-sm">
+          <strong>{state.errorTitle}</strong>
+          {state.errorDesc && <p className="mt-1">{state.errorDesc}</p>}
         </div>
       )}
 
-      {/* Row 1: Airplane & Price */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label
-            htmlFor="planeId"
-            className="flex items-center gap-2 text-gray-700 font-medium"
-          >
-            <Plane className="h-4 w-4 text-blue-500" />
-            Pilih pesawat
-          </Label>
-          <select
-            id="planeId"
-            name="planeId"
-            required
-            defaultValue={flight.planeId}
-            className="flex h-12 w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm ring-offset-background focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200"
-          >
-            <option value="">-- Pilih Pesawat --</option>
-            {airplanes.map((plane) => (
-              <option key={plane.id} value={plane.id}>
-                {plane.name} ({plane.code})
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Airplane Selection */}
+      <div className="space-y-1">
+        <Label htmlFor="planeId" className="text-sm font-medium text-gray-700">
+          Select Airplane
+        </Label>
+        <select
+          id="planeId"
+          name="planeId"
+          required
+          defaultValue={flight.planeId}
+          className="flex h-10 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#4e73df] focus:outline-none focus:ring-1 focus:ring-[#4e73df]"
+        >
+          <option value="">-- Select Airplane --</option>
+          {airplanes.map((plane) => (
+            <option key={plane.id} value={plane.id}>
+              {plane.name} ({plane.code})
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Price Configuration Section */}
-      <div className="relative">
-        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-300 rounded-full" />
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-green-500" />
-          Harga Tiket
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4">
-          <div className="space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+      {/* Prices */}
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-bold text-gray-700 mb-3">Ticket Prices</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
             <Label
               htmlFor="priceEconomy"
               className="text-sm font-medium text-gray-700"
             >
-              Economy Class
+              Economy (IDR)
             </Label>
             <Input
               id="priceEconomy"
               name="priceEconomy"
               type="number"
-              placeholder="IDR"
               defaultValue={(flight as any).priceEconomy || flight.price}
               required
-              className="h-10 bg-white"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-
-          <div className="space-y-2 p-4 bg-purple-50 rounded-xl border border-purple-100">
+          <div className="space-y-1">
             <Label
               htmlFor="priceBusiness"
-              className="text-sm font-medium text-purple-700"
+              className="text-sm font-medium text-gray-700"
             >
-              Business Class
+              Business (IDR)
             </Label>
             <Input
               id="priceBusiness"
               name="priceBusiness"
               type="number"
-              placeholder="IDR"
               defaultValue={
                 (flight as any).priceBusiness ||
                 Math.round(Number(flight.price) * 1.5)
               }
               required
-              className="h-10 bg-white"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-
-          <div className="space-y-2 p-4 bg-amber-50 rounded-xl border border-amber-100">
+          <div className="space-y-1">
             <Label
               htmlFor="priceFirst"
-              className="text-sm font-medium text-amber-700"
+              className="text-sm font-medium text-gray-700"
             >
-              First Class
+              First Class (IDR)
             </Label>
             <Input
               id="priceFirst"
               name="priceFirst"
               type="number"
-              placeholder="IDR"
               defaultValue={
                 (flight as any).priceFirst ||
                 Math.round(Number(flight.price) * 2.5)
               }
               required
-              className="h-10 bg-white"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
-          </div>
-        </div>
-
-        {/* Visual Editor */}
-        <div className="px-4 mt-8 mb-4">
-          <Label className="text-gray-700 font-medium mb-4 block">
-            Layout Kursi Pesawat
-          </Label>
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <p className="text-sm text-yellow-600 mb-4 bg-yellow-50 p-2 rounded border border-yellow-200">
-              ⚠️ <b>Perhatian:</b> Perubahan layout pada penerbangan yang sudah
-              memiliki pesanan dapat menyebabkan inkonsistensi data. Lakukan
-              dengan hati-hati.
-            </p>
-            <SeatLayoutEditor
-              initialSeats={initialSeats}
-              onChange={(seats) => setSeatConfig(JSON.stringify(seats))}
-            />
-            <input type="hidden" name="seatConfig" value={seatConfig} />
           </div>
         </div>
       </div>
 
-      {/* Departure Section */}
-      <div className="relative">
-        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full" />
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-blue-500" />
-          Keberangkatan
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4">
-          <div className="space-y-2">
-            <Label htmlFor="departureCity" className="text-gray-600">
-              Kota Keberangkatan
+      {/* Seat Layout */}
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-bold text-gray-700 mb-3">Seat Layout</h4>
+        <div className="p-3 bg-[#f6c23e]/10 border border-[#f6c23e]/20 rounded text-sm text-[#b58d0c] mb-3">
+          <strong>Warning:</strong> Changing the seat layout on a flight with
+          existing bookings may cause data inconsistency.
+        </div>
+        <SeatLayoutEditor
+          initialSeats={initialSeats}
+          onChange={(seats) => setSeatConfig(JSON.stringify(seats))}
+        />
+        <input type="hidden" name="seatConfig" value={seatConfig} />
+      </div>
+
+      {/* Departure */}
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-bold text-gray-700 mb-3">Departure</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <Label
+              htmlFor="departureCity"
+              className="text-sm font-medium text-gray-700"
+            >
+              City
             </Label>
             <Input
               id="departureCity"
               name="departureCity"
-              placeholder="Bandung"
               defaultValue={flight.departureCity}
               required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="departureCityCode"
+              className="text-sm font-medium text-gray-700"
+            >
+              City Code
+            </Label>
+            <Input
+              id="departureCityCode"
+              name="departureCityCode"
+              maxLength={5}
+              defaultValue={flight.departureCityCode}
+              required
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df] uppercase"
+            />
+          </div>
+          <div className="space-y-1">
             <Label
               htmlFor="departureDate"
-              className="flex items-center gap-2 text-gray-600"
+              className="text-sm font-medium text-gray-700"
             >
-              <Calendar className="h-4 w-4" />
-              Tanggal & Waktu
+              Date & Time
             </Label>
             <Input
               id="departureDate"
@@ -289,61 +258,53 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
               type="datetime-local"
               defaultValue={formatDateForInput(flight.departureDate)}
               required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="departureCityCode" className="text-gray-600">
-              Kode Kota
-            </Label>
-            <Input
-              id="departureCityCode"
-              name="departureCityCode"
-              placeholder="BDG"
-              maxLength={5}
-              defaultValue={flight.departureCityCode}
-              required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 uppercase font-bold text-center text-lg tracking-widest"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
         </div>
       </div>
 
-      {/* Arrow indicator */}
-      <div className="flex justify-center">
-        <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg">
-          <ArrowRight className="h-6 w-6 text-white rotate-90" />
-        </div>
-      </div>
-
-      {/* Arrival Section */}
-      <div className="relative">
-        <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-pink-500 to-pink-300 rounded-full" />
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-pink-500" />
-          Tujuan
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4">
-          <div className="space-y-2">
-            <Label htmlFor="destinationCity" className="text-gray-600">
-              Kota Tujuan
+      {/* Arrival */}
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-bold text-gray-700 mb-3">Arrival</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <Label
+              htmlFor="destinationCity"
+              className="text-sm font-medium text-gray-700"
+            >
+              City
             </Label>
             <Input
               id="destinationCity"
               name="destinationCity"
-              placeholder="Jakarta"
               defaultValue={flight.destinationCity}
               required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="destinationCityCode"
+              className="text-sm font-medium text-gray-700"
+            >
+              City Code
+            </Label>
+            <Input
+              id="destinationCityCode"
+              name="destinationCityCode"
+              maxLength={5}
+              defaultValue={flight.destinationCityCode}
+              required
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df] uppercase"
+            />
+          </div>
+          <div className="space-y-1">
             <Label
               htmlFor="arrivalDate"
-              className="flex items-center gap-2 text-gray-600"
+              className="text-sm font-medium text-gray-700"
             >
-              <Calendar className="h-4 w-4" />
-              Tanggal & Waktu Tiba
+              Date & Time
             </Label>
             <Input
               id="arrivalDate"
@@ -351,27 +312,15 @@ const FormFlightEdit: FC<FormFlightEditProps> = ({ id, airplanes }) => {
               type="datetime-local"
               defaultValue={formatDateForInput(flight.arrivalDate)}
               required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="destinationCityCode" className="text-gray-600">
-              Kode Kota
-            </Label>
-            <Input
-              id="destinationCityCode"
-              name="destinationCityCode"
-              placeholder="JKT"
-              maxLength={5}
-              defaultValue={flight.destinationCityCode}
-              required
-              className="h-12 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 uppercase font-bold text-center text-lg tracking-widest"
+              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
         </div>
       </div>
 
-      <SubmitButton />
+      <div className="pt-2">
+        <SubmitButton />
+      </div>
     </form>
   );
 };
