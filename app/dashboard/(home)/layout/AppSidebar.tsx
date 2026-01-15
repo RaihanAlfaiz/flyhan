@@ -18,6 +18,7 @@ import {
   Package,
   ShoppingBag,
   Zap,
+  ScanLine,
 } from "lucide-react";
 
 type NavItem = {
@@ -41,6 +42,11 @@ const navGroups: NavGroup[] = [
         icon: <LayoutDashboard className="w-5 h-5" />,
         name: "Dashboard",
         path: "/dashboard",
+      },
+      {
+        icon: <ScanLine className="w-5 h-5" />,
+        name: "Scan Ticket",
+        path: "/dashboard/scan-ticket",
       },
     ],
   },

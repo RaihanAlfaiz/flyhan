@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/mail";
+import { getBookingConfirmationTemplate } from "@/lib/email-templates/booking-confirmation";
 
 function generateTicketCode() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -29,7 +31,9 @@ export async function bookFlashSale(
     const flashSale = await prisma.flashSale.findUnique({
       where: { id: flashSaleId },
       include: {
-        flight: true,
+        flight: {
+          include: { plane: true },
+        },
       },
     });
 
@@ -97,6 +101,38 @@ export async function bookFlashSale(
 
       return ticket;
     });
+
+    // Send Email Notification
+    try {
+      const emailHtml = getBookingConfirmationTemplate({
+        userName: user.name,
+        bookingCode: result.code,
+        flightCode:
+          flashSale.flight.plane.code +
+          " (" +
+          flashSale.flight.plane.name +
+          ")",
+        departureCity: flashSale.flight.departureCity,
+        destinationCity: flashSale.flight.destinationCity,
+        departureDate: new Date(
+          flashSale.flight.departureDate
+        ).toLocaleDateString(),
+        seatNumber: seat.seatNumber,
+        price: new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(discountedPrice),
+      });
+
+      // Send in background
+      sendEmail({
+        to: user.email,
+        subject: "Flash Sale Booking Confirmed! ⚡ - FlyHan",
+        html: emailHtml,
+      });
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+    }
 
     // Revalidate paths
     revalidatePath("/");

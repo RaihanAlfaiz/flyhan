@@ -145,6 +145,10 @@ model Ticket {
   promoCode     PromoCode?   @relation(fields: [promoCodeId], references: [id])
   refundRequests RefundRequest[]
   addons        TicketAddon[]
+  
+  // Gate check-in
+  isBoarded     Boolean      @default(false)
+  boardedAt     DateTime?
 }
 
 model Passenger {

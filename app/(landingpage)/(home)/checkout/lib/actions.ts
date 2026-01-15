@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/mail";
+import { getBookingConfirmationTemplate } from "@/lib/email-templates/booking-confirmation";
 
 export async function checkoutTicket(
   flightId: string,
@@ -22,6 +24,7 @@ export async function checkoutTicket(
   // 1. Check if flight is still available (not departed, not cancelled)
   const flight = await prisma.flight.findUnique({
     where: { id: flightId },
+    include: { plane: true },
   });
 
   if (!flight) {
@@ -129,6 +132,37 @@ export async function checkoutTicket(
         timeout: 30000, // 30 seconds timeout for transaction
       }
     );
+    // Send Email Notification
+    try {
+      // Get seat numbers for email
+      const bookedSeats = await prisma.flightSeat.findMany({
+        where: { id: { in: seatIds } },
+      });
+      const seatNumbers = bookedSeats.map((s) => s.seatNumber).join(", ");
+
+      const emailHtml = getBookingConfirmationTemplate({
+        userName: user.name,
+        bookingCode: "MULTI-TIX", // Or use the first ticket code if available
+        flightCode: flight.plane.code + " (" + flight.plane.name + ")",
+        departureCity: flight.departureCity,
+        destinationCity: flight.destinationCity,
+        departureDate: new Date(flight.departureDate).toLocaleDateString(),
+        seatNumber: seatNumbers,
+        price: new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(totalPrice),
+      });
+
+      // Send in background so we don't block the response
+      sendEmail({
+        to: user.email,
+        subject: "Flight Booking Confirmed! ✈️ - FlyHan",
+        html: emailHtml,
+      });
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+    }
   } catch (error) {
     console.error("Checkout validation error:", error);
     return { error: "Failed to process transaction" };
