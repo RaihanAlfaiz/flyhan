@@ -9,6 +9,7 @@ interface FlightFiltersProps {
   departure?: string;
   arrival?: string;
   date?: string;
+  passengers?: string;
 }
 
 export default function FlightFilters({
@@ -17,6 +18,7 @@ export default function FlightFilters({
   departure,
   arrival,
   date,
+  passengers,
 }: FlightFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,6 +51,7 @@ export default function FlightFilters({
     if (departure) params.set("departure", departure);
     if (arrival) params.set("arrival", arrival);
     if (date) params.set("date", date);
+    if (passengers) params.set("passengers", passengers);
     router.push(`/available-flights?${params.toString()}`);
   };
 

@@ -67,6 +67,7 @@ export default async function ChooseSeatPage({
           plane: flight.plane,
         }}
         seatType={seatType}
+        currentUserId={user.id}
       />
     </div>
   );

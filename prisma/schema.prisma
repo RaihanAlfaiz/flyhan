@@ -93,13 +93,17 @@ model Flight {
 }
 
 model FlightSeat {
-  id         String   @id @default(cuid())
-  flightId   String
-  flight     Flight   @relation(fields: [flightId], references: [id])
-  seatNumber String
-  isBooked   Boolean? @default(false)
-  type       TypeSeat
-  ticket     Ticket?
+  id           String    @id @default(cuid())
+  flightId     String
+  flight       Flight    @relation(fields: [flightId], references: [id])
+  seatNumber   String
+  isBooked     Boolean?  @default(false)
+  type         TypeSeat
+  ticket       Ticket?
+  
+  // Seat Hold System
+  holdUntil    DateTime? // When the hold expires
+  heldByUserId String?   // User who is holding this seat
 }
 
 model Ticket {

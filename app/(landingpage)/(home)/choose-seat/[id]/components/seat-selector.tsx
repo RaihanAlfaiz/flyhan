@@ -10,6 +10,8 @@ interface Seat {
   seatNumber: string;
   type: string;
   isBooked: boolean | null;
+  holdUntil?: Date | string | null;
+  heldByUserId?: string | null;
 }
 
 interface FlightInfo {
@@ -36,6 +38,7 @@ interface SeatSelectorProps {
   seats: Seat[];
   flight: FlightInfo;
   seatType?: string;
+  currentUserId?: string;
 }
 
 // Format currency
@@ -80,10 +83,20 @@ export default function SeatSelector({
   seats,
   flight,
   seatType,
+  currentUserId,
 }: SeatSelectorProps) {
   const router = useRouter();
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if seat is held by another user (not current user)
+  const isSeatHeldByOther = (seat: Seat): boolean => {
+    if (!seat.holdUntil) return false;
+    const holdExpiry = new Date(seat.holdUntil);
+    const now = new Date();
+    // Held by someone else and not expired
+    return holdExpiry > now && seat.heldByUserId !== currentUserId;
+  };
 
   // Get displayed price based on seat type (or average if needed, though usually per seat)
   const getSeatPrice = (seat: Seat) => {
@@ -131,6 +144,7 @@ export default function SeatSelector({
   // Handle seat selection
   const handleSeatSelect = (seat: Seat) => {
     if (seat.isBooked) return;
+    if (isSeatHeldByOther(seat)) return; // Seat is held by another user
     if (seatType && seat.type !== seatType) return;
 
     // Check if already selected
@@ -181,12 +195,14 @@ export default function SeatSelector({
     const isAllowed = !seatType || seat.type === seatType;
     const isSelected = selectedSeats.some((s) => s.id === seat.id);
     const isBooked = seat.isBooked === true;
+    const isHeldByOther = isSeatHeldByOther(seat);
+    const isUnavailable = isBooked || isHeldByOther;
 
     let buttonClass =
       "relative flex shrink-0 w-[60px] h-[60px] items-center justify-center rounded-[15px] transition-all ";
     let contentClass = "font-bold text-[20px] ";
 
-    if (isBooked) {
+    if (isUnavailable) {
       buttonClass += "bg-[#3D3952] cursor-not-allowed";
       contentClass += "text-[#797684]";
     } else if (isSelected) {
@@ -205,9 +221,14 @@ export default function SeatSelector({
       <button
         key={seat.id}
         type="button"
-        disabled={isBooked || !isAllowed}
+        disabled={isUnavailable || !isAllowed}
         onClick={() => handleSeatSelect(seat)}
         className={buttonClass}
+        title={
+          isHeldByOther
+            ? "This seat is currently being reserved by another customer"
+            : undefined
+        }
       >
         <span className={contentClass}>{seat.seatNumber}</span>
       </button>

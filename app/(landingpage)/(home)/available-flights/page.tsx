@@ -93,6 +93,7 @@ interface PageProps {
     arrival?: string;
     date?: string;
     seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
+    passengers?: string;
     error?: string;
   }>;
 }
@@ -101,7 +102,9 @@ export default async function AvailableFlightsPage({
   searchParams,
 }: PageProps) {
   const params = await searchParams;
-  const { departure, arrival, date, seatType, error } = params;
+  const { departure, arrival, date, seatType, passengers, error } = params;
+
+  const passengerCount = passengers ? parseInt(passengers, 10) : 1;
 
   // Fetch flights based on search params
   const flights = await searchFlights({
@@ -109,6 +112,7 @@ export default async function AvailableFlightsPage({
     arrivalCode: arrival,
     date: date,
     seatType: seatType,
+    passengerCount: passengerCount,
   });
 
   // Fetch airplanes for filter
@@ -133,9 +137,23 @@ export default async function AvailableFlightsPage({
             <h1 className="font-bold text-[32px] leading-[48px]">
               {departureCity} to {arrivalCity}
             </h1>
-            <p className="font-medium text-lg leading-[27px]">
-              {flights.length.toLocaleString()} flight
-              {flights.length !== 1 ? "s" : ""} available
+            <p className="font-medium text-lg leading-[27px] flex items-center gap-3">
+              <span>
+                {flights.length.toLocaleString()} flight
+                {flights.length !== 1 ? "s" : ""} available
+              </span>
+              <span className="text-flysha-light-purple">•</span>
+              <span className="text-flysha-light-purple">
+                {passengerCount} passenger{passengerCount !== 1 ? "s" : ""}
+              </span>
+              {seatType && (
+                <>
+                  <span className="text-flysha-light-purple">•</span>
+                  <span className="text-flysha-light-purple capitalize">
+                    {seatType.toLowerCase()}
+                  </span>
+                </>
+              )}
             </p>
           </div>
           <div className="w-full h-[15px] bg-gradient-to-t from-[#080318] to-[rgba(8,3,24,0)] absolute bottom-0" />
@@ -175,6 +193,7 @@ export default async function AvailableFlightsPage({
             departure={departure}
             arrival={arrival}
             date={date}
+            passengers={passengers}
           />
 
           {/* Flight Cards */}

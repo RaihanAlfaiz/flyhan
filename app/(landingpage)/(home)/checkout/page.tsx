@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import PaymentButton from "./components/payment-button";
 import CheckoutContent from "./components/checkout-content";
 import { getFlightAddons } from "@/app/dashboard/(home)/flight-addons/lib/data";
+import { holdSeats } from "./lib/seat-hold";
 
 // Helper for currency formatting
 const formatCurrency = (val: number) =>
@@ -52,11 +53,19 @@ export default async function CheckoutPage({
     redirect(`/choose-seat/${flightId}`);
   }
 
+  // Hold seats for this user (10 min reservation)
+  const holdResult = await holdSeats(flightId, seatIdArray);
+
+  if (!holdResult.success) {
+    // Seats are no longer available, redirect with error
+    redirect(
+      `/choose-seat/${flightId}?error=${encodeURIComponent(holdResult.message)}`
+    );
+  }
+
   const addons = await getFlightAddons();
 
-  // Calculate Price based on Class for each seat
-  // ... Logic moved to Client Component for better interactivity
-  // We just pass flight and seats data
+  // Pass holdUntil to client for countdown timer
 
   return (
     <div className="text-white font-sans bg-flysha-black min-h-screen">
@@ -144,6 +153,7 @@ export default async function CheckoutPage({
           seats={seats}
           user={user}
           addons={addons}
+          holdUntil={holdResult.holdUntil?.toISOString()}
         />
       </section>
     </div>

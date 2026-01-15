@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Calendar, Plane, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, Users, Minus, Plus } from "lucide-react";
 
 interface SearchFormProps {
   cities: { city: string; code: string }[];
@@ -369,6 +369,220 @@ const CustomDatePicker = ({
   );
 };
 
+// Passenger Counter Component
+const PassengerCounter = ({
+  adults,
+  children,
+  onAdultsChange,
+  onChildrenChange,
+}: {
+  adults: number;
+  children: number;
+  onAdultsChange: (val: number) => void;
+  onChildrenChange: (val: number) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const totalPassengers = adults + children;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="flex flex-col justify-center gap-[14px]">
+      <label className="text-lg">Passengers</label>
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-[10px] cursor-pointer"
+        >
+          <div className="flex items-center w-8 h-8 shrink-0">
+            <Users className="w-8 h-8 text-flysha-light-purple" />
+          </div>
+          <span className="font-semibold text-[22px] leading-[26.63px]">
+            {totalPassengers} {totalPassengers === 1 ? "Guest" : "Guests"}
+          </span>
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-3 w-72 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-50 p-5">
+            {/* Adults */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="font-semibold text-gray-800">Adults</p>
+                <p className="text-sm text-gray-500">Age 12+</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onAdultsChange(Math.max(1, adults - 1))}
+                  disabled={adults <= 1}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="font-bold text-lg w-6 text-center">
+                  {adults}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onAdultsChange(Math.min(9, adults + 1))}
+                  disabled={adults >= 9}
+                  className="w-8 h-8 rounded-full bg-flysha-light-purple text-white flex items-center justify-center hover:opacity-80 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Children */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-gray-800">Children</p>
+                <p className="text-sm text-gray-500">Age 2-11</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onChildrenChange(Math.max(0, children - 1))}
+                  disabled={children <= 0}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="font-bold text-lg w-6 text-center">
+                  {children}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onChildrenChange(Math.min(9, children + 1))}
+                  disabled={children >= 9}
+                  className="w-8 h-8 rounded-full bg-flysha-light-purple text-white flex items-center justify-center hover:opacity-80 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="w-full py-2 rounded-xl bg-flysha-light-purple text-flysha-black font-bold hover:opacity-90 transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Seat Class Dropdown
+const SeatClassDropdown = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const options = [
+    { value: "", label: "Any Class" },
+    { value: "ECONOMY", label: "Economy" },
+    { value: "BUSINESS", label: "Business" },
+    { value: "FIRST", label: "First Class" },
+  ];
+
+  const selectedLabel =
+    options.find((o) => o.value === value)?.label || "Any Class";
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="flex flex-col justify-center gap-[14px]">
+      <label className="text-lg">Class</label>
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-[10px] cursor-pointer"
+        >
+          <div className="flex items-center w-8 h-8 shrink-0">
+            <Image
+              src="/assets/images/icons/crown.svg"
+              alt="class"
+              width={32}
+              height={32}
+            />
+          </div>
+          <span className="font-semibold text-[22px] leading-[26.63px]">
+            {selectedLabel}
+          </span>
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-50 overflow-hidden">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
+                  value === option.value
+                    ? "bg-flysha-light-purple/10 text-flysha-light-purple"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <span className="font-semibold">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function SearchForm({ cities }: SearchFormProps) {
   const router = useRouter();
   const [departure, setDeparture] = useState(cities[0]?.code || "");
@@ -376,6 +590,9 @@ export default function SearchForm({ cities }: SearchFormProps) {
     cities[1]?.code || cities[0]?.code || ""
   );
   const [date, setDate] = useState("");
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [seatClass, setSeatClass] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,15 +600,22 @@ export default function SearchForm({ cities }: SearchFormProps) {
     if (departure) params.set("departure", departure);
     if (arrival) params.set("arrival", arrival);
     if (date) params.set("date", date);
+
+    const totalPassengers = adults + children;
+    params.set("passengers", totalPassengers.toString());
+
+    if (seatClass) params.set("seatType", seatClass);
+
     router.push(`/available-flights?${params.toString()}`);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white text-flysha-black w-full flex justify-between items-center rounded-[20px] p-5"
+      className="bg-white text-flysha-black w-full rounded-[20px] p-5"
     >
-      <div className="flex gap-[50px] items-center p-5">
+      {/* Top Row: Departure, Arrival, Date */}
+      <div className="flex gap-[40px] items-center p-5 pb-0">
         <CustomDropdown
           label="Departure"
           value={departure}
@@ -433,12 +657,31 @@ export default function SearchForm({ cities }: SearchFormProps) {
         />
       </div>
 
-      <button
-        type="submit"
-        className="font-bold text-2xl leading-9 text-flysha-black text-center bg-flysha-light-purple rounded-[18px] p-[12px_30px] flex shrink-0 items-center h-[108px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
-      >
-        Explore Now
-      </button>
+      {/* Divider */}
+      <hr className="border-t border-[#EDE8F5] my-4 mx-5" />
+
+      {/* Bottom Row: Passengers, Class, Button */}
+      <div className="flex gap-[40px] items-center justify-between p-5 pt-0">
+        <div className="flex gap-[40px] items-center">
+          <PassengerCounter
+            adults={adults}
+            children={children}
+            onAdultsChange={setAdults}
+            onChildrenChange={setChildren}
+          />
+
+          <hr className="border border-[#EDE8F5] h-[60px]" />
+
+          <SeatClassDropdown value={seatClass} onChange={setSeatClass} />
+        </div>
+
+        <button
+          type="submit"
+          className="font-bold text-xl leading-8 text-flysha-black text-center bg-flysha-light-purple rounded-[18px] px-8 py-4 flex shrink-0 items-center transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
+        >
+          Explore Now
+        </button>
+      </div>
     </form>
   );
 }

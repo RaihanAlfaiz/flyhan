@@ -85,11 +85,18 @@ export interface FlightSearchParams {
   arrivalCode?: string;
   date?: string;
   seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
+  passengerCount?: number;
 }
 
 export async function searchFlights(params: FlightSearchParams) {
   try {
-    const { departureCode, arrivalCode, date, seatType } = params;
+    const {
+      departureCode,
+      arrivalCode,
+      date,
+      seatType,
+      passengerCount = 1,
+    } = params;
 
     // Build where clause dynamically
     const whereClause: Record<string, unknown> = {
@@ -157,7 +164,12 @@ export async function searchFlights(params: FlightSearchParams) {
       },
     });
 
-    return flights;
+    // Filter flights that have enough available seats for the passenger count
+    const filteredFlights = flights.filter(
+      (flight) => flight.seats.length >= passengerCount
+    );
+
+    return filteredFlights;
   } catch (error) {
     console.log(error);
     return [];
