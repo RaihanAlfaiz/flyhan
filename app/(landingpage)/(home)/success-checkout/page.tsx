@@ -37,10 +37,7 @@ export default async function SuccessCheckoutPage() {
     },
   });
 
-  const primaryTicket = tickets[0];
-  const flight = primaryTicket.flight;
-  const seatNumbers = tickets.map((t) => t.seat.seatNumber).join(", ");
-  const passengersCount = tickets.length;
+  const flight = tickets[0].flight;
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("id-ID", {
@@ -89,105 +86,114 @@ export default async function SuccessCheckoutPage() {
 
       <section
         id="Content"
-        className="container max-w-[1130px] mx-auto -mt-[103px] z-10 relative"
+        className="container max-w-[1130px] mx-auto -mt-[103px] z-10 relative pb-20"
       >
-        <div className="checkout-container flex justify-center items-center gap-[100px]">
-          <div className="bg-white flex flex-col rounded-[20px] w-[340px] text-flysha-black">
-            <div className="flex flex-col p-[20px_20px_25px] border-b-2 border-dotted border-flysha-grey gap-4 relative">
-              <div className="flex w-[300px] h-[130px] shrink-0 rounded-[14px] overflow-hidden bg-[#EDE8F5]">
-                <img
-                  src={flight.plane.image}
-                  className="w-full h-full object-cover"
-                  alt="thumbnail"
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col gap-[2px]">
-                  <p className="font-bold text-lg text-flysha-black">
-                    {flight.plane.name}
-                  </p>
-                  <p className="text-sm text-flysha-grey">
-                    {flight.plane.code} • {primaryTicket.seat.type} Class
-                  </p>
-                </div>
-                <div className="flex h-fit">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <img
-                      key={i}
-                      src="/assets/images/icons/Star.svg"
-                      className="w-5 h-5"
-                      alt="star"
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-between items-center w-[370px] absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 -bottom-[30px]">
-                <div className="w-[30px] h-[30px] rounded-full flex shrink-0 bg-flysha-black"></div>
-                <div className="w-[30px] h-[30px] rounded-full flex shrink-0 bg-flysha-black"></div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-[10px] p-[25px_20px_20px]">
-              <div className="flex justify-between text-flysha-black">
-                <span>Date</span>
-                <span className="font-semibold">
-                  {formatDate(flight.departureDate)}
-                </span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Time</span>
-                <span className="font-semibold">
-                  {formatTime(flight.departureDate)} -{" "}
-                  {formatTime(flight.arrivalDate)}
-                </span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Airport</span>
-                <span className="font-semibold">
-                  {flight.departureCityCode} - {flight.destinationCityCode}
-                </span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Name</span>
-                <span className="font-semibold truncate max-w-[150px]">
-                  {user.name}
-                </span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Seats Chosen</span>
-                <span className="font-semibold text-right max-w-[150px] truncate">
-                  {seatNumbers}
-                </span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Passengers</span>
-                <span className="font-semibold">{passengersCount} Persons</span>
-              </div>
-              <div className="flex justify-between text-flysha-black">
-                <span>Passport No.</span>
-                <span className="font-semibold">{user.passport || "-"}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-[42px] w-fit">
+        <div className="flex flex-col gap-10">
+          {/* Title Section */}
+          <div className="flex flex-col gap-[10px] items-center text-center">
             <h1 className="font-bold text-[32px] leading-[48px]">
               Success Checkout. <br />
               Enjoy Your Best Flight.
             </h1>
-            <div className="flex flex-col gap-[14px]">
+            <div className="flex gap-[14px]">
               <Link
                 href="/"
-                className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-full transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center"
+                className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 px-6 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center"
               >
                 Book More Flights
               </Link>
               <Link
                 href="/my-tickets"
-                className="font-semibold bg-flysha-black hover:bg-flysha-bg-purple border border-white hover:border-0 rounded-full h-12 w-full transition-all duration-300 flex justify-center items-center"
+                className="font-semibold bg-flysha-black hover:bg-flysha-bg-purple border border-white hover:border-0 rounded-full h-12 px-6 transition-all duration-300 flex justify-center items-center"
               >
                 View My Tickets
               </Link>
             </div>
+          </div>
+
+          {/* Ticket Cards Grid */}
+          <div className="flex flex-wrap justify-center gap-[30px]">
+            {tickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                className="bg-white flex flex-col rounded-[20px] w-[340px] text-flysha-black shadow-lg"
+              >
+                <div className="flex flex-col p-[20px_20px_25px] border-b-2 border-dotted border-flysha-grey gap-4 relative">
+                  <div className="flex w-[300px] h-[130px] shrink-0 rounded-[14px] overflow-hidden bg-[#EDE8F5]">
+                    <img
+                      src={flight.plane.image}
+                      className="w-full h-full object-cover"
+                      alt="thumbnail"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-[2px]">
+                      <p className="font-bold text-lg text-flysha-black">
+                        {flight.plane.name}
+                      </p>
+                      <p className="text-sm text-flysha-grey">
+                        {flight.plane.code} • {ticket.seat.type} Class
+                      </p>
+                    </div>
+                    <div className="flex h-fit">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <img
+                          key={i}
+                          src="/assets/images/icons/Star.svg"
+                          className="w-5 h-5"
+                          alt="star"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {/* Circle Cutouts */}
+                  <div className="flex justify-between items-center w-[370px] absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 -bottom-[30px]">
+                    <div className="w-[30px] h-[30px] rounded-full flex shrink-0 bg-flysha-black"></div>
+                    <div className="w-[30px] h-[30px] rounded-full flex shrink-0 bg-flysha-black"></div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-[10px] p-[25px_20px_20px]">
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Date</span>
+                    <span className="font-semibold">
+                      {formatDate(flight.departureDate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Time</span>
+                    <span className="font-semibold">
+                      {formatTime(flight.departureDate)} -{" "}
+                      {formatTime(flight.arrivalDate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Airport</span>
+                    <span className="font-semibold">
+                      {flight.departureCityCode} - {flight.destinationCityCode}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Name</span>
+                    <span className="font-semibold truncate max-w-[150px]">
+                      {ticket.passenger?.name || user.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Seat Chosen</span>
+                    <span className="font-semibold text-right max-w-[150px] truncate">
+                      {ticket.seat.seatNumber}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-flysha-black">
+                    <span>Passport No.</span>
+                    <span className="font-semibold">
+                      {ticket.passenger?.passport || user.passport || "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

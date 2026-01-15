@@ -1,12 +1,14 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import React, { useActionState, type FC } from "react";
 import type { ActionResult } from "@/app/dashboard/(auth)/signin/form/action";
 import { saveFlight } from "../lib/actions";
 import { useFormStatus } from "react-dom";
 import SeatLayoutEditor from "./seat-layout-editor";
+import Input from "../../ui/input/Input";
+import Label from "../../ui/label/Label";
+import Button from "../../ui/button/Button";
+import SearchableSelect from "../../ui/searchable-select/SearchableSelect";
 
 interface Airplane {
   id: string;
@@ -29,13 +31,9 @@ const SubmitButton = () => {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      disabled={pending}
-      type="submit"
-      className="px-4 py-2 bg-[#4e73df] hover:bg-[#2e59d9] text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Saving..." : "Save Flight"}
-    </button>
+    </Button>
   );
 };
 
@@ -43,44 +41,42 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
   const [state, formAction] = useActionState(saveFlight, initialFormState);
   const [seatConfig, setSeatConfig] = React.useState<string>("[]");
 
+  const airplaneOptions = airplanes.map((plane) => ({
+    value: plane.id,
+    label: plane.name,
+    description: plane.code,
+  }));
+
   return (
     <form action={formAction} className="space-y-6">
       {state.errorTitle && (
-        <div className="p-3 bg-[#e74a3b]/10 border border-[#e74a3b]/20 text-[#e74a3b] rounded text-sm">
+        <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400">
           <strong>{state.errorTitle}</strong>
           {state.errorDesc && <p className="mt-1">{state.errorDesc}</p>}
         </div>
       )}
 
       {/* Airplane Selection */}
-      <div className="space-y-1">
-        <Label htmlFor="planeId" className="text-sm font-medium text-gray-700">
+      <div>
+        <Label htmlFor="planeId" required>
           Select Airplane
         </Label>
-        <select
-          id="planeId"
+        <SearchableSelect
           name="planeId"
+          options={airplaneOptions}
+          placeholder="Search and select airplane..."
           required
-          className="flex h-10 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#4e73df] focus:outline-none focus:ring-1 focus:ring-[#4e73df]"
-        >
-          <option value="">-- Select Airplane --</option>
-          {airplanes.map((plane) => (
-            <option key={plane.id} value={plane.id}>
-              {plane.name} ({plane.code})
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {/* Prices */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-bold text-gray-700 mb-3">Ticket Prices</h4>
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
+        <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Ticket Prices
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <Label
-              htmlFor="priceEconomy"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="priceEconomy" required>
               Economy (IDR)
             </Label>
             <Input
@@ -89,14 +85,10 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               type="number"
               placeholder="500000"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="priceBusiness"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="priceBusiness" required>
               Business (IDR)
             </Label>
             <Input
@@ -105,14 +97,10 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               type="number"
               placeholder="1500000"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="priceFirst"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="priceFirst" required>
               First Class (IDR)
             </Label>
             <Input
@@ -121,15 +109,16 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               type="number"
               placeholder="3000000"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
         </div>
       </div>
 
       {/* Seat Layout */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-bold text-gray-700 mb-3">Seat Layout</h4>
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
+        <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Seat Layout
+        </h4>
         <SeatLayoutEditor
           onChange={(seats) => setSeatConfig(JSON.stringify(seats))}
         />
@@ -137,14 +126,13 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
       </div>
 
       {/* Departure */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-bold text-gray-700 mb-3">Departure</h4>
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
+        <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Departure
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <Label
-              htmlFor="departureCity"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="departureCity" required>
               City
             </Label>
             <Input
@@ -152,30 +140,22 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               name="departureCity"
               placeholder="Jakarta"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="departureCityCode"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="departureCityCode" required>
               City Code
             </Label>
             <Input
               id="departureCityCode"
               name="departureCityCode"
               placeholder="JKT"
-              maxLength={5}
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df] uppercase"
+              className="uppercase"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="departureDate"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="departureDate" required>
               Date & Time
             </Label>
             <Input
@@ -183,21 +163,19 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               name="departureDate"
               type="datetime-local"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
         </div>
       </div>
 
       {/* Arrival */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-bold text-gray-700 mb-3">Arrival</h4>
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
+        <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Arrival
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <Label
-              htmlFor="destinationCity"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="destinationCity" required>
               City
             </Label>
             <Input
@@ -205,30 +183,22 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               name="destinationCity"
               placeholder="Bali"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="destinationCityCode"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="destinationCityCode" required>
               City Code
             </Label>
             <Input
               id="destinationCityCode"
               name="destinationCityCode"
               placeholder="DPS"
-              maxLength={5}
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df] uppercase"
+              className="uppercase"
             />
           </div>
-          <div className="space-y-1">
-            <Label
-              htmlFor="arrivalDate"
-              className="text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="arrivalDate" required>
               Date & Time
             </Label>
             <Input
@@ -236,7 +206,6 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
               name="arrivalDate"
               type="datetime-local"
               required
-              className="h-10 rounded border-gray-300 focus:border-[#4e73df] focus:ring-[#4e73df]"
             />
           </div>
         </div>

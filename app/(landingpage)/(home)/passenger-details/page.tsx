@@ -49,7 +49,10 @@ export default async function PassengerDetailsPage({
   seats.sort((a, b) => a.seatNumber.localeCompare(b.seatNumber));
 
   return (
-    <div className="text-white font-sans bg-flysha-black min-h-screen font-poppins">
+    <div
+      className="text-white font-sans bg-flysha-black min-h-screen font-poppins pb-64"
+      style={{ backgroundColor: "#080318" }}
+    >
       <section
         id="Header"
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[290px] relative"
