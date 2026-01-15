@@ -19,6 +19,11 @@ export async function getTickets() {
           },
         },
         seat: true,
+        addons: {
+          include: {
+            flightAddon: true,
+          },
+        },
       },
       orderBy: {
         bookingDate: "desc",
@@ -50,6 +55,11 @@ export async function getTicketById(id: string) {
           },
         },
         seat: true,
+        addons: {
+          include: {
+            flightAddon: true,
+          },
+        },
       },
     });
     return ticket;

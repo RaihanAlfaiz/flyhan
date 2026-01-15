@@ -7,9 +7,11 @@ import type {
   FlightSeat,
   User,
   StatusTicket,
+  TicketAddon,
+  FlightAddon,
 } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Trash2, Plane, RefreshCw } from "lucide-react";
+import { Trash2, Plane, RefreshCw, Info } from "lucide-react";
 import { deleteTicket, updateTicketStatus } from "../lib/actions";
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +27,7 @@ interface TicketWithRelations extends Ticket {
   flight: Flight & { plane: Airplane };
   customer: Pick<User, "id" | "name" | "email">;
   seat: FlightSeat;
+  addons: (TicketAddon & { flightAddon: FlightAddon })[];
 }
 
 function formatDate(date: Date): string {
@@ -140,6 +143,45 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
     }
   };
 
+  const handleViewDetails = () => {
+    const addons = ticket.addons;
+    const hasAddons = addons && addons.length > 0;
+
+    const itemsHtml = hasAddons
+      ? addons
+          .map(
+            (a) => `
+        <li class="mb-3 border-b pb-2 last:border-0">
+            <div class="font-bold text-gray-800 text-base">${
+              a.flightAddon.title
+            }</div>
+            <div class="text-sm text-gray-500 mt-1">Note: <span class="italic text-gray-700">${
+              a.requestDetail || "-"
+            }</span></div>
+        </li>
+    `
+          )
+          .join("")
+      : "<p class='text-gray-500 italic'>No additional services requested.</p>";
+
+    Swal.fire({
+      title: `<span class="text-xl font-bold">Ticket Details</span>`,
+      html: `
+        <div class="text-left px-4">
+            <div class="mb-4">
+                <span class="block text-xs uppercase text-gray-400 font-semibold mb-1">Add-ons & Requests</span>
+                <ul class="list-none m-0 p-0 text-left">
+                    ${itemsHtml}
+                </ul>
+            </div>
+        </div>
+      `,
+      width: 500,
+      showCloseButton: true,
+      showConfirmButton: false,
+    });
+  };
+
   const handleDelete = async () => {
     const confirmed = await showConfirmDelete(`ticket ${ticket.code}`);
 
@@ -159,6 +201,21 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
 
   return (
     <div className="flex items-center gap-2">
+      <button
+        onClick={handleViewDetails}
+        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+          ticket.addons && ticket.addons.length > 0
+            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-400 dark:hover:bg-indigo-500/25 ring-1 ring-indigo-500/20"
+            : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        }`}
+      >
+        <Info
+          className={`h-3.5 w-3.5 ${
+            ticket.addons && ticket.addons.length > 0 ? "fill-current" : ""
+          }`}
+        />
+        {ticket.addons && ticket.addons.length > 0 ? "Requests" : "Details"}
+      </button>
       <button
         onClick={handleStatusChange}
         className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25"
@@ -255,7 +312,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
   },
   {
     accessorKey: "bookingDate",
-    header: "Booking Date",
+    header: "Date",
     cell: ({ row }) => (
       <span className="text-gray-600 text-sm dark:text-gray-400">
         {formatDate(row.original.bookingDate)}

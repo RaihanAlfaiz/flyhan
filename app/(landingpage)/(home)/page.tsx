@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import ButtonLogout from "../components/button-logout";
-import { getAllCities } from "../lib/data";
+import { getAllCities, getBestSelectives } from "../lib/data";
 import SearchForm from "../components/search-form";
+import BestSelectiveSection from "../components/best-selective-section";
 
 // Reusable components
 function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -134,45 +135,6 @@ function ServiceCard({
   );
 }
 
-function SelectiveCard({
-  image,
-  title,
-  subtitle,
-}: {
-  image: string;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-[30px] h-[310px] overflow-hidden">
-        <Image
-          src={image}
-          className="w-full h-[310px] object-cover"
-          alt={title}
-          width={260}
-          height={310}
-        />
-      </div>
-      <div className="flex gap-[14px] items-center">
-        <div className="flex shrink-0 w-8 h-8">
-          <Image
-            src="/assets/images/icons/crown-white.svg"
-            className="w-8 h-8"
-            alt="icon"
-            width={32}
-            height={32}
-          />
-        </div>
-        <div className="flex flex-col gap-[2px]">
-          <p className="font-bold text-lg">{title}</p>
-          <p className="text-flysha-off-purple">{subtitle}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function TestimonialCard() {
   return (
     <div className="testi-cards flex flex-col gap-[14px] h-full w-fit bg-flysha-bg-purple p-5 rounded-[20px] overflow-hidden">
@@ -225,7 +187,7 @@ function Footer() {
         <div className="flex shrink-0 h-fit z-10">
           <Image
             src="/assets/images/logos/logo.svg"
-            alt="Flyhan Logo"
+            alt="FlyHan Logo"
             width={120}
             height={40}
           />
@@ -364,6 +326,8 @@ export default async function Home() {
   const { session } = await getUser();
   const isLoggedIn = !!session;
   const cities = await getAllCities();
+  // Fetch unlimited/latest selectives
+  const selectives = await getBestSelectives();
 
   return (
     <div className="text-white font-sans bg-flysha-black">
@@ -429,58 +393,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Best Selective Section */}
-      <section
-        id="Selected"
-        className="container max-w-[1130px] mx-auto flex flex-col pt-[100px] gap-[30px]"
-      >
-        <div className="flex justify-between items-center">
-          <h2 className="font-bold text-[32px] leading-[48px] text-center">
-            Best Selective
-          </h2>
-          <div className="flex gap-[10px]">
-            <button className="flex shrink-0 w-10 h-10 items-center justify-center bg-white rounded-full">
-              <Image
-                src="/assets/images/icons/arrow-right.svg"
-                className="rotate-180"
-                alt="prev"
-                width={20}
-                height={20}
-              />
-            </button>
-            <button className="flex shrink-0 w-10 h-10 items-center justify-center bg-white rounded-full">
-              <Image
-                src="/assets/images/icons/arrow-right.svg"
-                alt="next"
-                width={20}
-                height={20}
-              />
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-[30px]">
-          <SelectiveCard
-            image="/assets/images/thumbnail/thumbnail1.png"
-            title="First Lounge"
-            subtitle="Manhanggattan"
-          />
-          <SelectiveCard
-            image="/assets/images/thumbnail/thumbnail2.png"
-            title="Business First"
-            subtitle="Gulfstream 109-BB"
-          />
-          <SelectiveCard
-            image="/assets/images/thumbnail/thumbnail3.png"
-            title="Pickup at Home"
-            subtitle="Bentley Banta"
-          />
-          <SelectiveCard
-            image="/assets/images/thumbnail/thumbnail4.png"
-            title="Fly Roam"
-            subtitle="Capung A19-22"
-          />
-        </div>
-      </section>
+      {/* Best Selective Section (Carousel) */}
+      <BestSelectiveSection selectives={selectives} />
 
       {/* Testimonials Section */}
       <section

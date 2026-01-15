@@ -6,6 +6,7 @@ import { getFlightById } from "@/app/(landingpage)/lib/data";
 import { redirect } from "next/navigation";
 import PaymentButton from "./components/payment-button";
 import CheckoutContent from "./components/checkout-content";
+import { getFlightAddons } from "@/app/dashboard/(home)/flight-addons/lib/data";
 
 // Helper for currency formatting
 const formatCurrency = (val: number) =>
@@ -50,6 +51,8 @@ export default async function CheckoutPage({
   if (seats.length === 0) {
     redirect(`/choose-seat/${flightId}`);
   }
+
+  const addons = await getFlightAddons();
 
   // Calculate Price based on Class for each seat
   // ... Logic moved to Client Component for better interactivity
@@ -136,7 +139,12 @@ export default async function CheckoutPage({
         id="Content"
         className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-20"
       >
-        <CheckoutContent flight={flight} seats={seats} user={user} />
+        <CheckoutContent
+          flight={flight}
+          seats={seats}
+          user={user}
+          addons={addons}
+        />
       </section>
     </div>
   );

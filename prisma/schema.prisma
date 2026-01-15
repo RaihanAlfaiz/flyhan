@@ -122,6 +122,7 @@ model Ticket {
   promoCodeId   String?
   promoCode     PromoCode?   @relation(fields: [promoCodeId], references: [id])
   refundRequests RefundRequest[]
+  addons        TicketAddon[]
 }
 
 model Passenger {
@@ -149,4 +150,30 @@ model RefundRequest {
   status      RefundStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+}
+
+model BestSelective {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String
+  image     String
+  url       String?
+}
+
+model FlightAddon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String?
+  price       Int      @default(0)
+  tickets     TicketAddon[]
+}
+
+model TicketAddon {
+  id            String       @id @default(cuid())
+  ticketId      String
+  ticket        Ticket       @relation(fields: [ticketId], references: [id])
+  flightAddonId String
+  flightAddon   FlightAddon  @relation(fields: [flightAddonId], references: [id])
+  requestDetail String? // e.g. "Pick me up with Toyota Alphard"
 }

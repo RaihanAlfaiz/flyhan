@@ -9,7 +9,8 @@ export async function checkoutTicket(
   seatIds: string[],
   totalPrice: number,
   passengerData: { seatId: string; name: string; passport?: string }[],
-  promoCodeId?: string
+  promoCodeId?: string,
+  selectedAddons?: { addonId: string; requestDetail?: string }[]
 ) {
   const { session, user } = await getUser();
 
@@ -49,10 +50,7 @@ export async function checkoutTicket(
     return { error: "One or more seats are already booked" };
   }
 
-  // Calculate price per ticket (distribute total evenly for simplicity, or we could pass individual prices)
-  // Since we pass total price for all tickets in previous step, let's just stick with total here for the sake of MVP
-  // But strictly speaking, Ticket model has 'price' field. Ideally we should save individual price.
-  // For now, let's divide total by count to save per-ticket price.
+  // Calculate price per ticket (total / count) - Includes addon price share
   const pricePerTicket = Math.floor(totalPrice / seatIds.length);
 
   try {
@@ -77,7 +75,7 @@ export async function checkoutTicket(
           newPassengerId = newPassenger.id;
         }
 
-        await tx.ticket.create({
+        const newTicket = await tx.ticket.create({
           data: {
             code,
             flightId,
@@ -92,6 +90,19 @@ export async function checkoutTicket(
             passengerId: newPassengerId,
           },
         });
+
+        // Save Addons
+        if (selectedAddons && selectedAddons.length > 0) {
+          for (const addon of selectedAddons) {
+            await tx.ticketAddon.create({
+              data: {
+                ticketId: newTicket.id,
+                flightAddonId: addon.addonId,
+                requestDetail: addon.requestDetail,
+              },
+            });
+          }
+        }
 
         await tx.flightSeat.update({
           where: { id: seatId },

@@ -6,11 +6,14 @@ import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { verifyPromoCode, checkoutTicket } from "../lib/actions";
 import { PassengerData } from "../../passenger-details/components/passenger-form";
+import { FlightAddon } from "@prisma/client";
+import { CheckCircle2 } from "lucide-react";
 
 interface CheckoutContentProps {
   flight: any;
   seats: any[];
   user: any;
+  addons: FlightAddon[];
 }
 
 // Helper
@@ -26,6 +29,7 @@ export default function CheckoutContent({
   flight,
   seats,
   user,
+  addons,
 }: CheckoutContentProps) {
   const router = useRouter();
   const [passengers, setPassengers] = useState<PassengerData[]>([]);
@@ -35,20 +39,20 @@ export default function CheckoutContent({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // State for Addons: Storing ID, Price, and optional Request Detail
+  const [selectedAddons, setSelectedAddons] = useState<
+    { id: string; price: number; title: string; requestDetail?: string }[]
+  >([]);
+
   // Load Passengers from Session Storage
   useEffect(() => {
     const stored = sessionStorage.getItem("booking_passenger_data");
     const storedFlightId = sessionStorage.getItem("booking_flight_id");
 
     if (stored && storedFlightId === flight.id) {
-      // Need to filter only confirmed seats? No, assume flow is strict.
       const parsed = JSON.parse(stored);
       setPassengers(parsed);
     } else {
-      // Fallback if data missing (direct access) -> Redirect? or Use User Profile
-      // For MVP, user profile as passenger 1
-      // router.push(`/passenger-details?flightId=${flight.id}&seatIds=${seats.map(s=>s.id).join(',')}`)
-      // Let's just create dummy based on logged in user to avoid blocker
       const dummy: PassengerData[] = seats.map((s) => ({
         seatId: s.id,
         seatNumber: s.seatNumber,
@@ -75,16 +79,46 @@ export default function CheckoutContent({
     }
   });
 
+  // Calculate Addon Price total (Addon Price * Number of Seats)
+  const totalAddonPrice =
+    selectedAddons.reduce((acc, curr) => acc + curr.price, 0) * seats.length;
+
   const insurancePrice = Math.round(totalSeatPrice * 0.1);
   const taxPrice = Math.round(totalSeatPrice * 0.11);
-  const grandTotalBeforeDiscount = totalSeatPrice + insurancePrice + taxPrice;
+  const grandTotalBeforeDiscount =
+    totalSeatPrice + totalAddonPrice + insurancePrice + taxPrice;
   const grandTotal = Math.max(0, grandTotalBeforeDiscount - discount);
+
+  // Toggle Logic
+  const toggleAddon = (addon: FlightAddon) => {
+    setSelectedAddons((prev) => {
+      const exists = prev.find((a) => a.id === addon.id);
+      if (exists) {
+        return prev.filter((a) => a.id !== addon.id);
+      } else {
+        return [
+          ...prev,
+          {
+            id: addon.id,
+            price: addon.price,
+            title: addon.title,
+            requestDetail: "",
+          },
+        ];
+      }
+    });
+  };
+
+  const updateAddonRequest = (id: string, detail: string) => {
+    setSelectedAddons((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, requestDetail: detail } : a))
+    );
+  };
 
   const handleApplyPromo = async () => {
     if (!promoCode) return;
     setIsVerifying(true);
 
-    // Call Server Action
     const res = await verifyPromoCode(promoCode);
 
     setIsVerifying(false);
@@ -120,6 +154,7 @@ export default function CheckoutContent({
       html: `
         <div class="text-left text-sm">
             <p>Total: <b>${formatCurrency(grandTotal)}</b></p>
+            <p>Includes ${selectedAddons.length} extra services</p>
             <p>Promo: ${appliedPromo || "-"}</p>
         </div>
       `,
@@ -135,7 +170,6 @@ export default function CheckoutContent({
         didOpen: () => Swal.showLoading(),
       });
 
-      // Prepare Data for Server Action
       const seatIds = seats.map((s) => s.id);
       const passengerDataForServer = passengers.map((p) => ({
         seatId: p.seatId,
@@ -143,26 +177,29 @@ export default function CheckoutContent({
         passport: p.passport,
       }));
 
-      let promoCodeId = "";
-   
+      // Map addons for server
+      const addonsForServer = selectedAddons.map((a) => ({
+        addonId: a.id,
+        requestDetail: a.requestDetail,
+      }));
 
       const res = await checkoutTicket(
         flight.id,
         seatIds,
         grandTotal,
         passengerDataForServer,
-        undefined 
+        undefined,
+        addonsForServer // Pass Addons Here
       );
 
       if (res.error) {
         Swal.fire("Failed", res.error, "error");
         setIsProcessing(false);
       } else {
-        // Clear Session
         sessionStorage.removeItem("booking_passenger_data");
         sessionStorage.removeItem("booking_flight_id");
 
-        Swal.close(); // Close processing modal instantly
+        Swal.close();
         router.push("/success-checkout");
       }
     } else {
@@ -241,24 +278,71 @@ export default function CheckoutContent({
 
       {/* RIGHT COLUMN */}
       <div className="flex flex-col mt-[10px] gap-[30px] flex-1">
+        {/* Additional Benefits / Flight Addons */}
         <div className="flex flex-col gap-4">
-          <p className="font-semibold">Additional Benefits</p>
-          {/* Benefits Cards here... keeping it simple for now, using dummy static content from prev page */}
-          <div className="benefit-card flex items-center gap-[14px] p-[14px_20px] ring-1 ring-white rounded-[20px]">
-            <div className="w-8 h-8 flex shrink-0">
-              <Image
-                src="/assets/images/icons/crown-white.svg"
-                className="w-8 h-8"
-                alt="icon"
-                width={32}
-                height={32}
-              />
-            </div>
-            <div className="flex flex-col gap-[2px]">
-              <p className="font-bold text-lg">Business First</p>
-              <p className="text-flysha-off-purple">{flight.plane.name}</p>
-            </div>
-          </div>
+          <p className="font-semibold">Additional Services</p>
+          {addons && addons.length > 0 ? (
+            addons.map((addon) => {
+              const isSelected = selectedAddons.some((a) => a.id === addon.id);
+              return (
+                <div
+                  key={addon.id}
+                  className={`flex flex-col p-4 rounded-[20px] ring-1 transition-all ${
+                    isSelected
+                      ? "ring-flysha-light-purple bg-flysha-light-purple/10"
+                      : "ring-white hover:ring-white/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div
+                        onClick={() => toggleAddon(addon)}
+                        className={`w-6 h-6 rounded flex items-center justify-center border cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-flysha-light-purple border-flysha-light-purple"
+                            : "border-white/50 hover:border-white"
+                        }`}
+                      >
+                        {isSelected && (
+                          <CheckCircle2 className="w-4 h-4 text-flysha-black" />
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold">{addon.title}</span>
+                        <span className="text-sm text-gray-400">
+                          {addon.description}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-bold">
+                      {formatCurrency(addon.price)}
+                    </span>
+                  </div>
+
+                  {isSelected && (
+                    <div className="mt-3 pl-10">
+                      <input
+                        type="text"
+                        placeholder="Specify request (e.g. halal meal, pickup location)..."
+                        className="w-full bg-flysha-black border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-flysha-light-purple transition-colors"
+                        value={
+                          selectedAddons.find((a) => a.id === addon.id)
+                            ?.requestDetail || ""
+                        }
+                        onChange={(e) =>
+                          updateAddonRequest(addon.id, e.target.value)
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-gray-500 text-sm">
+              No additional services available.
+            </p>
+          )}
         </div>
 
         {/* Promo Code Input */}
@@ -310,6 +394,14 @@ export default function CheckoutContent({
               {formatCurrency(totalSeatPrice)}
             </span>
           </div>
+          {totalAddonPrice > 0 && (
+            <div className="flex justify-between">
+              <span>Add-ons ({selectedAddons.length})</span>
+              <span className="font-semibold">
+                {formatCurrency(totalAddonPrice)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Insurance 10%</span>
             <span className="font-semibold">

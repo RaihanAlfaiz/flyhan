@@ -13,6 +13,8 @@ import {
   RefreshCw,
   ChevronDown,
   MoreHorizontal,
+  Crown,
+  Star,
 } from "lucide-react";
 
 type NavItem = {
@@ -57,6 +59,16 @@ const navItems: NavItem[] = [
     icon: <RefreshCw className="w-5 h-5" />,
     name: "Refund Requests",
     path: "/dashboard/refund-requests",
+  },
+  {
+    icon: <Crown className="w-5 h-5" />,
+    name: "Flight Addons",
+    path: "/dashboard/flight-addons",
+  },
+  {
+    icon: <Star className="w-5 h-5" />,
+    name: "Best Selectives",
+    path: "/dashboard/best-selectives",
   },
 ];
 

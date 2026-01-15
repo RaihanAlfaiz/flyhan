@@ -201,3 +201,18 @@ export async function getFlightById(id: string) {
     return null;
   }
 }
+
+// Get Best Selective Data (ALL)
+export async function getBestSelectives() {
+  try {
+    const data = await prisma.bestSelective.findMany({
+      orderBy: {
+        id: "desc",
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}

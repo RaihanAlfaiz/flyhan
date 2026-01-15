@@ -30,6 +30,11 @@ export default async function TicketDetailPage({
       },
       seat: true,
       passenger: true,
+      addons: {
+        include: {
+          flightAddon: true,
+        },
+      },
     },
   });
 
@@ -67,6 +72,28 @@ export default async function TicketDetailPage({
   const seatPrice = Math.round(grandTotal / 1.21);
   const tax = Math.round(seatPrice * 0.11);
   const insurance = Math.round(seatPrice * 0.1);
+
+  // Combine Default Benefits + Purchased Addons
+  const defaultBenefits = [
+    {
+      title: "Business First",
+      desc: ticket.flight.plane.name,
+      icon: "/assets/images/icons/crown-white.svg",
+    },
+    {
+      title: "Safe Guard",
+      desc: "Airplane Metal X",
+      icon: "/assets/images/icons/shield-tick-white.svg",
+    },
+  ];
+
+  const purchasedAddons = ticket.addons.map((addon) => ({
+    title: addon.flightAddon.title,
+    desc: addon.requestDetail || "Premium Service",
+    icon: "/assets/images/icons/crown-white.svg", // Using crown as generic addon icon
+  }));
+
+  const allBenefits = [...defaultBenefits, ...purchasedAddons];
 
   return (
     <div className="text-white font-sans bg-flysha-black min-h-screen font-poppins">
@@ -227,47 +254,23 @@ export default async function TicketDetailPage({
             <div className="flex flex-col gap-4">
               <p className="font-semibold">Additional Benefits</p>
               <div className="flex flex-wrap gap-[30px]">
-                <div className="benefit-card flex items-center gap-[14px] p-[14px_20px] ring-1 ring-white rounded-[20px]">
-                  <div className="w-8 h-8 flex shrink-0">
-                    <img
-                      src="/assets/images/icons/crown-white.svg"
-                      className="w-8 h-8"
-                      alt="icon"
-                    />
+                {/* Dynamically Render All Benefits (Default + Purchased) */}
+                {allBenefits.map((benefit, idx) => (
+                  <div
+                    key={idx}
+                    className="benefit-card flex items-center gap-[14px] p-[14px_20px] ring-1 ring-white rounded-[20px]"
+                  >
+                    <div className="w-8 h-8 flex shrink-0">
+                      <img src={benefit.icon} className="w-8 h-8" alt="icon" />
+                    </div>
+                    <div className="flex flex-col gap-[2px]">
+                      <p className="font-bold text-lg">{benefit.title}</p>
+                      <p className="text-flysha-off-purple text-sm max-w-[150px] truncate">
+                        {benefit.desc}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-[2px]">
-                    <p className="font-bold text-lg">Business First</p>
-                    <p className="text-flysha-off-purple">
-                      {ticket.flight.plane.name}
-                    </p>
-                  </div>
-                </div>
-                <div className="benefit-card flex items-center gap-[14px] p-[14px_20px] ring-1 ring-white rounded-[20px]">
-                  <div className="w-8 h-8 flex shrink-0">
-                    <img
-                      src="/assets/images/icons/shield-tick-white.svg"
-                      className="w-8 h-8"
-                      alt="icon"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-[2px]">
-                    <p className="font-bold text-lg">Safe Guard</p>
-                    <p className="text-flysha-off-purple">Airplane Metal X</p>
-                  </div>
-                </div>
-                <div className="benefit-card flex items-center gap-[14px] p-[14px_20px] ring-1 ring-white rounded-[20px]">
-                  <div className="w-8 h-8 flex shrink-0">
-                    <img
-                      src="/assets/images/icons/building-3-white.svg"
-                      className="w-8 h-8"
-                      alt="icon"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-[2px]">
-                    <p className="font-bold text-lg">Home Pickup</p>
-                    <p className="text-flysha-off-purple">Bentley Banta</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -284,6 +287,12 @@ export default async function TicketDetailPage({
                     {formatCurrency(seatPrice)}
                   </span>
                 </div>
+                {ticket.addons.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>Add-ons</span>
+                    <span className="font-semibold">Included</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Insurance 10%</span>
                   <span className="font-semibold">
