@@ -21,8 +21,7 @@ export default async function SuccessCheckoutPage() {
     redirect("/");
   }
 
-  // Get tickets created around the same time (within 30 seconds of latest)
-  // This handles sequential ticket creation in transaction
+
   const bookingTimeWindow = new Date(latestTicket.bookingDate);
   bookingTimeWindow.setSeconds(bookingTimeWindow.getSeconds() - 30);
 

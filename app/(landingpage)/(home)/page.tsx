@@ -2,7 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import ButtonLogout from "../components/button-logout";
-import { getAllCities, getBestSelectives, getAllPackages } from "../lib/data";
+import {
+  getAllCities,
+  getBestSelectives,
+  getAllPackages,
+  getActiveFlashSales,
+} from "../lib/data";
 import SearchForm from "../components/search-form";
 import BestSelectiveSection from "../components/best-selective-section";
 import FlashSaleSection from "../components/flash-sale-section";
@@ -340,6 +345,7 @@ export default async function Home() {
   // Fetch unlimited/latest selectives
   const selectives = await getBestSelectives();
   const packages = await getAllPackages();
+  const flashSales = await getActiveFlashSales();
 
   return (
     <div className="text-white font-sans bg-flysha-black">
@@ -373,7 +379,7 @@ export default async function Home() {
       </section>
 
       {/* Flash Sale Section */}
-      <FlashSaleSection />
+      <FlashSaleSection flashSales={flashSales} />
 
       {/* Services Section */}
       <section

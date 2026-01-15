@@ -91,6 +91,23 @@ model Flight {
   status              FlightStatus @default(SCHEDULED)
   seats               FlightSeat[]
   tickets             Ticket[]
+  flashSales          FlashSale[]
+}
+
+model FlashSale {
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  flightId          String
+  flight            Flight    @relation(fields: [flightId], references: [id])
+  discountPercent   Int       // e.g. 50 for 50% off
+  startDate         DateTime
+  endDate           DateTime
+  maxQuota          Int       @default(10) // Max tickets at flash sale price
+  soldCount         Int       @default(0)  // How many have been sold
+  isActive          Boolean   @default(true)
+  image             String?
+  createdAt         DateTime  @default(now())
 }
 
 model FlightSeat {

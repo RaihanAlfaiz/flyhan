@@ -242,3 +242,26 @@ export async function getAllPackages() {
     return [];
   }
 }
+
+export async function getActiveFlashSales() {
+  try {
+    const now = new Date();
+    const flashSales = await prisma.flashSale.findMany({
+      where: {
+        isActive: true,
+        endDate: { gte: now }, // Not expired
+      },
+      include: {
+        flight: {
+          include: { plane: true },
+        },
+      },
+      orderBy: { endDate: "asc" }, // Soonest ending first
+      take: 6, // Limit to 6 flash sales
+    });
+    return flashSales;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}
