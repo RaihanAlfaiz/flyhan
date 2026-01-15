@@ -128,7 +128,7 @@
   }
   html,
   body {
-    @apply bg-[#080318] text-foreground min-h-screen;
+    @apply bg-[#080318] text-foreground min-h-screen scroll-smooth;
     overscroll-behavior-y: none; /* Prevent rubber-banding showing white bg on some browsers */
   }
 }
@@ -199,6 +199,15 @@
   }
 
   .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }

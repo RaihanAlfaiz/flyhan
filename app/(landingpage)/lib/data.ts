@@ -228,3 +228,17 @@ export async function getBestSelectives() {
     return [];
   }
 }
+
+export async function getAllPackages() {
+  try {
+    const packages = await prisma.flightPackage.findMany({
+      orderBy: {
+        title: "asc",
+      },
+    });
+    return packages;
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}

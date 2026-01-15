@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import ButtonLogout from "../components/button-logout";
-import { getAllCities, getBestSelectives } from "../lib/data";
+import { getAllCities, getBestSelectives, getAllPackages } from "../lib/data";
 import SearchForm from "../components/search-form";
 import BestSelectiveSection from "../components/best-selective-section";
+import FlashSaleSection from "../components/flash-sale-section";
+import PackagesSection from "../components/packages-section";
 
 // Reusable components
 function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -22,40 +24,40 @@ function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
       <ul className="flex gap-[30px] items-center w-fit">
         <li>
           <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            href="#FlashSale"
+            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
           >
             Flash Sale
           </Link>
         </li>
         <li>
           <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            href="#Discover"
+            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
           >
             Discover
           </Link>
         </li>
         <li>
           <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            href="#Packages"
+            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
           >
             Packages
           </Link>
         </li>
         <li>
           <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            href="#Stories"
+            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
           >
             Stories
           </Link>
         </li>
         <li>
           <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            href="#About"
+            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
           >
             About
           </Link>
@@ -67,6 +69,12 @@ function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
             >
               My Tickets
+            </Link>
+            <Link
+              href="/my-packages"
+              className="font-bold text-white border-2 border-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:bg-flysha-light-purple hover:text-flysha-black"
+            >
+              My Packages
             </Link>
             <ButtonLogout />
           </>
@@ -175,7 +183,10 @@ function TestimonialCard() {
 
 function Footer() {
   return (
-    <footer className="flex flex-col justify-between mt-[150px] border-t-[6px] border-flysha-light-purple p-[100px_10px_30px]">
+    <footer
+      id="About"
+      className="flex flex-col justify-between mt-[150px] border-t-[6px] border-flysha-light-purple p-[100px_10px_30px]"
+    >
       <div className="container max-w-[1130px] mx-auto flex justify-between relative">
         <Image
           src="/assets/images/icons/Ellipse 4.png"
@@ -316,7 +327,7 @@ function Footer() {
         </div>
       </div>
       <p className="mx-auto mt-[60px] text-[#A0A0AC] text-sm z-10">
-        All Rights Reserved. Copyright Flyhan 2024.
+        All Rights Reserved. Copyright FlyHan 2024.
       </p>
     </footer>
   );
@@ -328,6 +339,7 @@ export default async function Home() {
   const cities = await getAllCities();
   // Fetch unlimited/latest selectives
   const selectives = await getBestSelectives();
+  const packages = await getAllPackages();
 
   return (
     <div className="text-white font-sans bg-flysha-black">
@@ -359,6 +371,9 @@ export default async function Home() {
           <LogoSlider />
         </div>
       </section>
+
+      {/* Flash Sale Section */}
+      <FlashSaleSection />
 
       {/* Services Section */}
       <section
@@ -393,20 +408,23 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Best Selective Section (Carousel) */}
+      {/* Discover Section */}
       <BestSelectiveSection selectives={selectives} />
 
-      {/* Testimonials Section */}
+      {/* Packages Section */}
+      <PackagesSection packages={packages} />
+
+      {/* Stories (Testimonials) Section */}
       <section
-        id="Testimonials"
+        id="Stories"
         className="w-full flex flex-col pt-[100px] gap-[30px]"
       >
         <div className="flex flex-col gap-[6px] items-center">
           <h2 className="font-bold text-[32px] leading-[48px] text-center">
-            Testimonials
+            Travel Stories
           </h2>
           <p className="font-medium text-flysha-off-purple">
-            We gave them all the best experiences ever
+            Read about experiences from our happy travelers
           </p>
         </div>
         <div className="testimonial-slider w-full overflow-hidden">

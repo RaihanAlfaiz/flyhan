@@ -93,12 +93,12 @@ export default function BestSelectiveSection({
 
   return (
     <section
-      id="Selected"
+      id="Discover"
       className="container max-w-[1130px] mx-auto flex flex-col pt-[100px] gap-[30px]"
     >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-[32px] leading-[48px] text-center text-white">
-          Best Selective
+          Discover Destinations
         </h2>
         <div className="flex gap-[10px]">
           <button

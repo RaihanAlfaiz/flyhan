@@ -48,14 +48,15 @@ enum RefundStatus {
 }
 
 model User {
-  id       String    @id @default(cuid())
-  name     String
-  email    String    @unique
-  password String
-  passport String?
-  role     RoleUser
-  tickets  Ticket[]
-  sessions Session[]
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  passport      String?
+  role          RoleUser
+  tickets       Ticket[]
+  sessions      Session[]
+  packageOrders PackageOrder[]
 }
 
 model Session {
@@ -180,4 +181,36 @@ model TicketAddon {
   flightAddonId String
   flightAddon   FlightAddon  @relation(fields: [flightAddonId], references: [id])
   requestDetail String? // e.g. "Pick me up with Toyota Alphard"
+}
+
+model FlightPackage {
+  id          String         @id @default(cuid())
+  title       String
+  price       Int
+  description String
+  image       String
+  features    String[]
+  orders      PackageOrder[]
+}
+
+enum PackageOrderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+model PackageOrder {
+  id            String             @id @default(cuid())
+  code          String             @unique
+  packageId     String
+  package       FlightPackage      @relation(fields: [packageId], references: [id])
+  customerId    String
+  customer      User               @relation(fields: [customerId], references: [id])
+  quantity      Int                @default(1)
+  totalPrice    BigInt
+  status        PackageOrderStatus @default(PENDING)
+  tokenMidtrans String?
+  orderDate     DateTime           @default(now())
+  notes         String?
 }

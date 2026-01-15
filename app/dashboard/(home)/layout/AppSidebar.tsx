@@ -15,6 +15,8 @@ import {
   MoreHorizontal,
   Crown,
   Star,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
 
 type NavItem = {
@@ -69,6 +71,16 @@ const navItems: NavItem[] = [
     icon: <Star className="w-5 h-5" />,
     name: "Best Selectives",
     path: "/dashboard/best-selectives",
+  },
+  {
+    icon: <Package className="w-5 h-5" />,
+    name: "Packages",
+    path: "/dashboard/packages",
+  },
+  {
+    icon: <ShoppingBag className="w-5 h-5" />,
+    name: "Package Orders",
+    path: "/dashboard/package-orders",
   },
 ];
 
