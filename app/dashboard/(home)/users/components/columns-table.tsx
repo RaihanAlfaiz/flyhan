@@ -27,15 +27,21 @@ interface UserWithCount {
 
 const RoleBadge = ({ role }: { role: RoleUser }) => {
   const config = {
-    ADMIN: { bg: "bg-[#f6c23e]/10", text: "text-[#f6c23e]" },
-    CUSTOMER: { bg: "bg-[#4e73df]/10", text: "text-[#4e73df]" },
+    ADMIN: {
+      bg: "bg-amber-50 dark:bg-amber-500/15",
+      text: "text-amber-600 dark:text-amber-500",
+    },
+    CUSTOMER: {
+      bg: "bg-brand-50 dark:bg-brand-500/15",
+      text: "text-brand-600 dark:text-brand-400",
+    },
   };
 
   const { bg, text } = config[role];
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${bg} ${text}`}
     >
       {role === "ADMIN" ? (
         <Shield className="h-3 w-3" />
@@ -63,7 +69,7 @@ const ActionButtons = ({ user }: { user: UserWithCount }) => {
       showCancelButton: true,
       confirmButtonText: "Update",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#4e73df",
+      confirmButtonColor: "#465fff",
       inputValidator: (value) => {
         if (!value) return "Select a role!";
         return null;
@@ -105,16 +111,16 @@ const ActionButtons = ({ user }: { user: UserWithCount }) => {
     <div className="flex items-center gap-2">
       <button
         onClick={handleRoleChange}
-        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25"
       >
-        <Shield className="h-3 w-3" />
+        <Shield className="h-3.5 w-3.5" />
         Role
       </button>
       <button
         onClick={handleDelete}
-        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500 dark:hover:bg-red-500/25"
       >
-        <Trash2 className="h-3 w-3" />
+        <Trash2 className="h-3.5 w-3.5" />
         Delete
       </button>
     </div>
@@ -127,10 +133,10 @@ export const columns: ColumnDef<UserWithCount>[] = [
     header: "Name",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#4e73df] flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold text-sm">
           {row.original.name.charAt(0).toUpperCase()}
         </div>
-        <span className="font-medium text-gray-800">
+        <span className="font-medium text-gray-800 dark:text-white/90">
           {row.getValue("name")}
         </span>
       </div>
@@ -140,7 +146,9 @@ export const columns: ColumnDef<UserWithCount>[] = [
     accessorKey: "email",
     header: "Email",
     cell: ({ row }) => (
-      <span className="text-gray-600">{row.getValue("email")}</span>
+      <span className="text-gray-600 dark:text-gray-400">
+        {row.getValue("email")}
+      </span>
     ),
   },
   {
@@ -149,9 +157,11 @@ export const columns: ColumnDef<UserWithCount>[] = [
     cell: ({ row }) => {
       const passport = row.getValue("passport") as string | null;
       return passport ? (
-        <span className="font-mono text-gray-700">{passport}</span>
+        <span className="font-mono text-gray-700 dark:text-gray-300">
+          {passport}
+        </span>
       ) : (
-        <span className="text-gray-400">-</span>
+        <span className="text-gray-400 dark:text-gray-500">-</span>
       );
     },
   },
@@ -168,7 +178,9 @@ export const columns: ColumnDef<UserWithCount>[] = [
       return (
         <span
           className={`font-semibold ${
-            count > 0 ? "text-[#4e73df]" : "text-gray-400"
+            count > 0
+              ? "text-brand-500 dark:text-brand-400"
+              : "text-gray-400 dark:text-gray-500"
           }`}
         >
           {count}

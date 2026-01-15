@@ -45,16 +45,25 @@ function formatPrice(price: bigint | number): string {
 
 const StatusBadge = ({ status }: { status: StatusTicket }) => {
   const config = {
-    PENDING: { bg: "bg-[#f6c23e]/10", text: "text-[#f6c23e]" },
-    SUCCESS: { bg: "bg-[#1cc88a]/10", text: "text-[#1cc88a]" },
-    FAILED: { bg: "bg-[#e74a3b]/10", text: "text-[#e74a3b]" },
+    PENDING: {
+      bg: "bg-amber-50 dark:bg-amber-500/15",
+      text: "text-amber-600 dark:text-amber-400",
+    },
+    SUCCESS: {
+      bg: "bg-green-50 dark:bg-green-500/15",
+      text: "text-green-600 dark:text-green-500",
+    },
+    FAILED: {
+      bg: "bg-red-50 dark:bg-red-500/15",
+      text: "text-red-600 dark:text-red-500",
+    },
   };
 
   const { bg, text } = config[status];
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bg} ${text}`}
     >
       {status}
     </span>
@@ -63,18 +72,29 @@ const StatusBadge = ({ status }: { status: StatusTicket }) => {
 
 const SeatTypeBadge = ({ type }: { type: string }) => {
   const config: Record<string, { bg: string; text: string }> = {
-    ECONOMY: { bg: "bg-[#1cc88a]/10", text: "text-[#1cc88a]" },
-    BUSINESS: { bg: "bg-[#4e73df]/10", text: "text-[#4e73df]" },
-    FIRST: { bg: "bg-[#f6c23e]/10", text: "text-[#f6c23e]" },
+    ECONOMY: {
+      bg: "bg-green-50 dark:bg-green-500/15",
+      text: "text-green-600 dark:text-green-500",
+    },
+    BUSINESS: {
+      bg: "bg-brand-50 dark:bg-brand-500/15",
+      text: "text-brand-600 dark:text-brand-400",
+    },
+    FIRST: {
+      bg: "bg-amber-50 dark:bg-amber-500/15",
+      text: "text-amber-600 dark:text-amber-400",
+    },
   };
 
   const { bg, text } = config[type] || {
-    bg: "bg-gray-100",
-    text: "text-gray-700",
+    bg: "bg-gray-100 dark:bg-gray-800",
+    text: "text-gray-700 dark:text-gray-300",
   };
 
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${bg} ${text}`}
+    >
       {type}
     </span>
   );
@@ -96,7 +116,7 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
       showCancelButton: true,
       confirmButtonText: "Update",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#4e73df",
+      confirmButtonColor: "#465fff",
       inputValidator: (value) => {
         if (!value) return "Select a status!";
         return null;
@@ -141,16 +161,16 @@ const ActionButtons = ({ ticket }: { ticket: TicketWithRelations }) => {
     <div className="flex items-center gap-2">
       <button
         onClick={handleStatusChange}
-        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25"
       >
-        <RefreshCw className="h-3 w-3" />
+        <RefreshCw className="h-3.5 w-3.5" />
         Status
       </button>
       <button
         onClick={handleDelete}
-        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500 dark:hover:bg-red-500/25"
       >
-        <Trash2 className="h-3 w-3" />
+        <Trash2 className="h-3.5 w-3.5" />
         Delete
       </button>
     </div>
@@ -162,7 +182,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
     accessorKey: "code",
     header: "Ticket Code",
     cell: ({ row }) => (
-      <span className="font-mono font-bold text-[#4e73df]">
+      <span className="font-mono font-bold text-brand-500 dark:text-brand-400">
         {row.getValue("code")}
       </span>
     ),
@@ -174,8 +194,12 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
       const customer = row.original.customer;
       return (
         <div>
-          <p className="font-medium text-gray-800">{customer.name}</p>
-          <p className="text-xs text-gray-500">{customer.email}</p>
+          <p className="font-medium text-gray-800 dark:text-white/90">
+            {customer.name}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {customer.email}
+          </p>
         </div>
       );
     },
@@ -187,12 +211,12 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
       const flight = row.original.flight;
       return (
         <div className="flex items-center gap-2">
-          <Plane className="h-4 w-4 text-[#4e73df]" />
+          <Plane className="h-4 w-4 text-brand-500" />
           <div>
-            <p className="font-medium text-gray-800">
+            <p className="font-medium text-gray-800 dark:text-white/90">
               {flight.departureCityCode} → {flight.destinationCityCode}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {flight.plane.name} • {formatDate(flight.departureDate)}
             </p>
           </div>
@@ -207,7 +231,9 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
       const seat = row.original.seat;
       return (
         <div className="flex items-center gap-2">
-          <span className="font-mono font-bold">{seat.seatNumber}</span>
+          <span className="font-mono font-bold text-gray-800 dark:text-white/90">
+            {seat.seatNumber}
+          </span>
           <SeatTypeBadge type={seat.type} />
         </div>
       );
@@ -217,7 +243,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <span className="font-semibold text-gray-800">
+      <span className="font-semibold text-gray-800 dark:text-white/90">
         {formatPrice(row.original.price)}
       </span>
     ),
@@ -231,7 +257,7 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
     accessorKey: "bookingDate",
     header: "Booking Date",
     cell: ({ row }) => (
-      <span className="text-gray-600 text-sm">
+      <span className="text-gray-600 text-sm dark:text-gray-400">
         {formatDate(row.original.bookingDate)}
       </span>
     ),

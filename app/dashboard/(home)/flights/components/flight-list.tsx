@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   PencilIcon,
   Trash2Icon,
@@ -59,18 +58,18 @@ function formatPrice(price: number): string {
 const FlightStatusBadge = ({ status }: { status: FlightStatus }) => {
   const config = {
     SCHEDULED: {
-      bg: "bg-[#1cc88a]/10",
-      text: "text-[#1cc88a]",
+      bg: "bg-green-50 dark:bg-green-500/15",
+      text: "text-green-600 dark:text-green-500",
       label: "Scheduled",
     },
     DELAYED: {
-      bg: "bg-[#f6c23e]/10",
-      text: "text-[#f6c23e]",
+      bg: "bg-amber-50 dark:bg-amber-500/15",
+      text: "text-amber-600 dark:text-amber-500",
       label: "Delayed",
     },
     CANCELLED: {
-      bg: "bg-[#e74a3b]/10",
-      text: "text-[#e74a3b]",
+      bg: "bg-red-50 dark:bg-red-500/15",
+      text: "text-red-600 dark:text-red-500",
       label: "Cancelled",
     },
   };
@@ -79,7 +78,7 @@ const FlightStatusBadge = ({ status }: { status: FlightStatus }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${bg} ${text}`}
     >
       {status !== "SCHEDULED" && <AlertCircle className="h-3 w-3" />}
       {label}
@@ -122,7 +121,7 @@ const FlightCard = ({ flight }: FlightCardProps) => {
       showCancelButton: true,
       confirmButtonText: "Update",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#4e73df",
+      confirmButtonColor: "#465fff",
       inputValidator: (value) => {
         if (!value) return "Select a status!";
         return null;
@@ -176,56 +175,60 @@ const FlightCard = ({ flight }: FlightCardProps) => {
 
   return (
     <div
-      className={`bg-white rounded shadow overflow-hidden border-l-4 ${
+      className={`rounded-2xl border bg-white overflow-hidden dark:bg-white/[0.03] ${
         flightStatus === "CANCELLED"
-          ? "border-l-[#e74a3b]"
+          ? "border-red-200 dark:border-red-500/30"
           : flightStatus === "DELAYED"
-          ? "border-l-[#f6c23e]"
-          : "border-l-[#1cc88a]"
+          ? "border-amber-200 dark:border-amber-500/30"
+          : "border-gray-200 dark:border-gray-800"
       }`}
     >
       {/* Main Card Content */}
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           {/* Airplane Info */}
           <div className="flex items-center gap-3 lg:w-52 flex-shrink-0">
-            <img
-              src={flight.plane.image}
-              alt={flight.plane.name}
-              className="h-12 w-16 object-cover rounded"
-            />
+            <div className="h-12 w-16 overflow-hidden rounded-lg">
+              <img
+                src={flight.plane.image}
+                alt={flight.plane.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
             <div>
-              <h3 className="font-medium text-gray-800 text-sm line-clamp-1">
+              <h3 className="font-medium text-gray-800 dark:text-white/90 text-sm line-clamp-1">
                 {flight.plane.name}
               </h3>
-              <span className="text-xs text-gray-500">{flight.plane.code}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {flight.plane.code}
+              </span>
             </div>
           </div>
 
           {/* Route Info */}
           <div className="flex-1 flex items-center justify-center gap-3">
             <div className="text-center">
-              <p className="text-lg font-bold text-gray-800">
+              <p className="text-lg font-bold text-gray-800 dark:text-white/90">
                 {flight.departureCityCode}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatTime(flight.departureDate)}
               </p>
             </div>
 
             <div className="flex items-center gap-2 px-4">
-              <div className="w-2 h-2 rounded-full bg-[#4e73df]" />
-              <div className="w-16 h-0.5 bg-gray-300 relative">
-                <Plane className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 text-[#4e73df]" />
+              <div className="w-2 h-2 rounded-full bg-brand-500" />
+              <div className="w-16 h-0.5 bg-gray-300 dark:bg-gray-700 relative">
+                <Plane className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 text-brand-500" />
               </div>
-              <div className="w-2 h-2 rounded-full bg-[#4e73df]" />
+              <div className="w-2 h-2 rounded-full bg-brand-500" />
             </div>
 
             <div className="text-center">
-              <p className="text-lg font-bold text-gray-800">
+              <p className="text-lg font-bold text-gray-800 dark:text-white/90">
                 {flight.destinationCityCode}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatTime(flight.arrivalDate)}
               </p>
             </div>
@@ -233,7 +236,7 @@ const FlightCard = ({ flight }: FlightCardProps) => {
 
           {/* Date */}
           <div className="text-center lg:w-24">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {formatDate(flight.departureDate)}
             </p>
           </div>
@@ -245,11 +248,11 @@ const FlightCard = ({ flight }: FlightCardProps) => {
 
           {/* Price */}
           <div className="lg:w-32 text-center">
-            <p className="text-xs text-gray-500">From</p>
-            <p className="font-bold text-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">From</p>
+            <p className="font-bold text-gray-800 dark:text-white/90">
               Rp {formatPrice(flight.price)}
             </p>
-            <div className="flex items-center justify-center gap-1 text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-gray-500 dark:text-gray-400">
               <Users className="h-3 w-3" />
               <span className="text-xs">{getTotalAvailableSeats()} seats</span>
             </div>
@@ -259,21 +262,21 @@ const FlightCard = ({ flight }: FlightCardProps) => {
           <div className="flex items-center justify-center gap-2 lg:w-40 flex-shrink-0">
             <button
               onClick={handleStatusChange}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-[#36b9cc] hover:bg-[#2a96a5] rounded transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-400 dark:hover:bg-blue-500/25"
             >
               Status
             </button>
             <Link
               href={`/dashboard/flights/${flight.id}/edit`}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25"
             >
               Edit
             </Link>
             <button
               onClick={handleDelete}
-              className="px-2 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
+              className="inline-flex items-center justify-center rounded-lg bg-red-50 p-1.5 text-red-600 transition hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500 dark:hover:bg-red-500/25"
             >
-              <Trash2Icon className="h-3 w-3" />
+              <Trash2Icon className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -281,7 +284,7 @@ const FlightCard = ({ flight }: FlightCardProps) => {
         {/* Expand Button */}
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="w-full mt-3 pt-3 border-t border-dashed border-gray-200 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="w-full mt-4 pt-4 border-t border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
         >
           <span>{showDetails ? "Hide" : "Show"} price details</span>
           <ChevronDown
@@ -294,31 +297,34 @@ const FlightCard = ({ flight }: FlightCardProps) => {
 
       {/* Expanded Details */}
       {showDetails && (
-        <div className="px-4 pb-4 pt-2 bg-gray-50 border-t border-gray-100">
+        <div className="px-5 pb-5 pt-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {(["ECONOMY", "BUSINESS", "FIRST"] as const).map((type) => {
               const seats = getAvailableSeats(type);
               const price = getClassPrice(type);
 
               return (
-                <div key={type} className="p-3 rounded border bg-white">
+                <div
+                  key={type}
+                  className="p-4 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {type.charAt(0) + type.slice(1).toLowerCase()} Class
                     </span>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded ${
+                      className={`text-xs rounded-full px-2 py-0.5 font-medium ${
                         seats.available > 5
-                          ? "bg-[#1cc88a]/10 text-[#1cc88a]"
+                          ? "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500"
                           : seats.available > 0
-                          ? "bg-[#f6c23e]/10 text-[#f6c23e]"
-                          : "bg-[#e74a3b]/10 text-[#e74a3b]"
+                          ? "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-500"
+                          : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-500"
                       }`}
                     >
                       {seats.available}/{seats.total}
                     </span>
                   </div>
-                  <p className="text-lg font-bold text-gray-800">
+                  <p className="text-lg font-bold text-gray-800 dark:text-white/90">
                     Rp {formatPrice(price)}
                   </p>
                 </div>
@@ -350,13 +356,13 @@ export default function FlightList({ flights }: FlightListProps) {
   if (flights.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
           <Plane className="h-8 w-8 text-gray-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-600 mb-2">
+        <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">
           No Flights Yet
         </h3>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400">
           Click "Add Flight" to create a new flight.
         </p>
       </div>
@@ -364,7 +370,7 @@ export default function FlightList({ flights }: FlightListProps) {
   }
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-4 p-5">
       {flights.map((flight) => (
         <FlightCard key={flight.id} flight={flight} />
       ))}

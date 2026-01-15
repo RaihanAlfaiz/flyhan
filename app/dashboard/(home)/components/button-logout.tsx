@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 export default function ButtonLogout() {
   return (
     <button
-      className="flex w-full items-center gap-2 rounded px-3 py-2.5 text-sm font-medium text-blue-100 transition-all hover:bg-white/10 hover:text-white"
+      className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
       onClick={async () => {
         const result = await Swal.fire({
           title: "Logout?",

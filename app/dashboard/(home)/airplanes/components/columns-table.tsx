@@ -37,9 +37,9 @@ const DeleteButton = ({ id, name }: { id: string; name: string }) => {
   return (
     <button
       onClick={handleDelete}
-      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#e74a3b] hover:bg-[#c23a2d] rounded transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500 dark:hover:bg-red-500/25"
     >
-      <Trash2 className="h-3 w-3" />
+      <Trash2 className="h-3.5 w-3.5" />
       Delete
     </button>
   );
@@ -52,11 +52,13 @@ export const columns: ColumnDef<Airplane>[] = [
     cell: ({ row }) => {
       const imageUrl = row.getValue("image") as string;
       return (
-        <img
-          src={imageUrl}
-          alt={row.getValue("name") as string}
-          className="h-10 w-16 object-cover rounded"
-        />
+        <div className="h-10 w-16 overflow-hidden rounded-lg">
+          <img
+            src={imageUrl}
+            alt={row.getValue("name") as string}
+            className="h-full w-full object-cover"
+          />
+        </div>
       );
     },
   },
@@ -64,14 +66,16 @@ export const columns: ColumnDef<Airplane>[] = [
     accessorKey: "name",
     header: "Name",
     cell: ({ row }) => (
-      <span className="font-medium text-gray-800">{row.getValue("name")}</span>
+      <span className="font-medium text-gray-800 dark:text-white/90">
+        {row.getValue("name")}
+      </span>
     ),
   },
   {
     accessorKey: "code",
     header: "Code",
     cell: ({ row }) => (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-[#4e73df]/10 text-[#4e73df]">
+      <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
         {row.getValue("code")}
       </span>
     ),
@@ -85,9 +89,9 @@ export const columns: ColumnDef<Airplane>[] = [
         <div className="flex items-center gap-2">
           <Link
             href={`/dashboard/airplanes/${plane.id}/edit`}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-500 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400 dark:hover:bg-brand-500/25"
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className="h-3.5 w-3.5" />
             Edit
           </Link>
           <DeleteButton id={plane.id} name={plane.name} />

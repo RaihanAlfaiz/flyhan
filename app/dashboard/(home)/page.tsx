@@ -5,10 +5,16 @@ import {
   Users,
   Ticket,
   CalendarDays,
-  ArrowRight,
+  ArrowUpRight,
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card/Card";
+import PageHeader from "./ui/page-header/PageHeader";
+import MetricCard from "./ui/metric-card/MetricCard";
+import Button from "./ui/button/Button";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "./ui/table";
+import Badge from "./ui/badge/Badge";
 
 function formatCurrency(amount: bigint | number) {
   return new Intl.NumberFormat("id-ID", {
@@ -30,7 +36,6 @@ function formatDate(date: Date) {
 export default async function DashboardPage() {
   const { user } = await getUser();
 
-  // Statistics Data
   const [
     airplaneCount,
     flightCount,
@@ -38,6 +43,7 @@ export default async function DashboardPage() {
     customerCount,
     recentTickets,
     totalRevenue,
+    pendingRefunds,
   ] = await Promise.all([
     prisma.airplane.count(),
     prisma.flight.count({
@@ -61,187 +67,243 @@ export default async function DashboardPage() {
       where: { status: "SUCCESS" },
       _sum: { price: true },
     }),
+    prisma.refundRequest.count({ where: { status: "PENDING" } }),
   ]);
-
-  const stats = [
-    {
-      label: "Total Revenue",
-      value: formatCurrency(totalRevenue._sum.price || 0),
-      icon: DollarSign,
-      borderColor: "border-l-[#4e73df]",
-      textColor: "text-[#4e73df]",
-    },
-    {
-      label: "Total Flights",
-      value: flightCount,
-      icon: CalendarDays,
-      borderColor: "border-l-[#1cc88a]",
-      textColor: "text-[#1cc88a]",
-    },
-    {
-      label: "Tickets Sold",
-      value: ticketCount,
-      icon: Ticket,
-      borderColor: "border-l-[#36b9cc]",
-      textColor: "text-[#36b9cc]",
-    },
-    {
-      label: "Total Customers",
-      value: customerCount,
-      icon: Users,
-      borderColor: "border-l-[#f6c23e]",
-      textColor: "text-[#f6c23e]",
-    },
-  ];
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <Link
-          href="/dashboard/flights/create"
-          className="inline-flex items-center gap-2 rounded bg-[#4e73df] px-4 py-2 text-sm font-medium text-white hover:bg-[#2e59d9] transition-colors"
-        >
-          <Plane className="h-4 w-4" />
-          Add New Flight
-        </Link>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Dashboard" },
+        ]}
+        actions={
+          <Link href="/dashboard/flights/create">
+            <Button startIcon={<Plane className="h-4 w-4" />}>
+              Add New Flight
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Stats Cards - SB Admin 2 Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className={`bg-white rounded shadow border-l-4 ${stat.borderColor} p-4`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-xs font-bold uppercase ${stat.textColor}`}>
-                  {stat.label}
-                </p>
-                <p className="text-xl font-bold text-gray-800 mt-1">
-                  {stat.value}
-                </p>
-              </div>
-              <stat.icon className="h-8 w-8 text-gray-300" />
-            </div>
-          </div>
-        ))}
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
+        <MetricCard
+          title="Total Revenue"
+          value={formatCurrency(totalRevenue._sum.price || 0)}
+          icon={
+            <DollarSign className="text-gray-800 dark:text-white/90 w-6 h-6" />
+          }
+          iconBgColor="bg-brand-50 dark:bg-brand-500/15"
+        />
+        <MetricCard
+          title="Active Flights"
+          value={flightCount.toString()}
+          icon={
+            <CalendarDays className="text-gray-800 dark:text-white/90 w-6 h-6" />
+          }
+          iconBgColor="bg-green-50 dark:bg-green-500/15"
+        />
+        <MetricCard
+          title="Tickets Sold"
+          value={ticketCount.toString()}
+          icon={<Ticket className="text-gray-800 dark:text-white/90 w-6 h-6" />}
+          iconBgColor="bg-blue-50 dark:bg-blue-500/15"
+        />
+        <MetricCard
+          title="Total Customers"
+          value={customerCount.toString()}
+          icon={<Users className="text-gray-800 dark:text-white/90 w-6 h-6" />}
+          iconBgColor="bg-amber-50 dark:bg-amber-500/15"
+        />
       </div>
 
       {/* Content Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transactions */}
-        <div className="lg:col-span-2 bg-white rounded shadow">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h6 className="text-[#4e73df] font-bold">Recent Transactions</h6>
-            <Link
-              href="/dashboard/tickets"
-              className="text-sm text-gray-500 hover:text-[#4e73df] flex items-center gap-1"
-            >
-              View All <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="p-6">
-            {recentTickets.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                No transactions yet.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentTickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#4e73df] flex items-center justify-center text-white text-sm font-bold">
-                        {ticket.customer.name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800 text-sm">
-                          {ticket.customer.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {ticket.flight.plane.code} • Seat{" "}
-                          {ticket.seat.seatNumber}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-800 text-sm">
-                        {formatCurrency(ticket.price)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(ticket.bookingDate)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="grid grid-cols-12 gap-4 md:gap-6">
+        {/* Recent Orders Table */}
+        <div className="col-span-12 xl:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+              <Link
+                href="/dashboard/tickets"
+                className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
+              >
+                View All <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </CardHeader>
+            <div className="max-w-full overflow-x-auto">
+              <Table>
+                <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                  <TableRow>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                    >
+                      Customer
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                    >
+                      Flight
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                    >
+                      Seat
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                    >
+                      Amount
+                    </TableCell>
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                    >
+                      Date
+                    </TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                  {recentTickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell className="px-5 py-8 text-center text-gray-400 dark:text-gray-500">
+                        No transactions yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentTickets.map((ticket) => (
+                      <TableRow key={ticket.id}>
+                        <TableCell className="px-5 py-4 text-start">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 overflow-hidden rounded-full bg-brand-500 flex items-center justify-center text-white font-bold">
+                              {ticket.customer.name
+                                .substring(0, 2)
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <span className="block font-medium text-gray-800 text-sm dark:text-white/90">
+                                {ticket.customer.name}
+                              </span>
+                              <span className="block text-gray-500 text-xs dark:text-gray-400">
+                                {ticket.customer.email}
+                              </span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-gray-500 text-start text-sm dark:text-gray-400">
+                          {ticket.flight.plane.code}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-start">
+                          <Badge size="sm" color="primary">
+                            {ticket.seat.seatNumber}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-gray-800 font-medium text-sm dark:text-white/90">
+                          {formatCurrency(ticket.price)}
+                        </TableCell>
+                        <TableCell className="px-5 py-4 text-gray-500 text-sm dark:text-gray-400">
+                          {formatDate(ticket.bookingDate)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-white rounded shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h6 className="text-[#4e73df] font-bold">Quick Stats</h6>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Total Airplanes</span>
-              <span className="text-sm font-bold text-gray-800">
-                {airplaneCount}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#4e73df] h-2 rounded-full"
-                style={{ width: "100%" }}
-              ></div>
-            </div>
+        <div className="col-span-12 xl:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Airplanes
+                  </span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white/90">
+                    {airplaneCount}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
+                  <div
+                    className="bg-brand-500 h-2 rounded-full"
+                    style={{ width: "100%" }}
+                  ></div>
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-600">Active Flights</span>
-              <span className="text-sm font-bold text-gray-800">
-                {flightCount}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#1cc88a] h-2 rounded-full"
-                style={{ width: "80%" }}
-              ></div>
-            </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Active Flights
+                  </span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white/90">
+                    {flightCount}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
+                    style={{ width: "80%" }}
+                  ></div>
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-600">Tickets Sold</span>
-              <span className="text-sm font-bold text-gray-800">
-                {ticketCount}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#36b9cc] h-2 rounded-full"
-                style={{ width: "60%" }}
-              ></div>
-            </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Tickets Sold
+                  </span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white/90">
+                    {ticketCount}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full"
+                    style={{ width: "60%" }}
+                  ></div>
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-600">Registered Users</span>
-              <span className="text-sm font-bold text-gray-800">
-                {customerCount}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#f6c23e] h-2 rounded-full"
-                style={{ width: "45%" }}
-              ></div>
-            </div>
-          </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Pending Refunds
+                  </span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white/90">
+                    {pendingRefunds}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
+                  <div
+                    className="bg-amber-500 h-2 rounded-full"
+                    style={{ width: `${Math.min(pendingRefunds * 10, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <Link
+                  href="/dashboard/refund-requests"
+                  className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
+                >
+                  View Refund Requests <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

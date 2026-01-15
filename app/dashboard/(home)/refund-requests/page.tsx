@@ -1,6 +1,24 @@
 import { getRefundRequests } from "./lib/data";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import {
+  RefreshCw,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
+import PageHeader from "../ui/page-header/PageHeader";
+import { Card, CardHeader, CardTitle } from "../ui/card/Card";
+import MetricCard from "../ui/metric-card/MetricCard";
+import Badge from "../ui/badge/Badge";
+import Button from "../ui/button/Button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("id-ID", {
@@ -27,193 +45,195 @@ export default async function RefundRequestsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Refund Requests</h1>
-        {pendingCount > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#f6c23e]/10 text-[#f6c23e] rounded-lg">
-            <AlertCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">
+      <PageHeader
+        title="Refund Requests"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Refund Requests" },
+        ]}
+        actions={
+          pendingCount > 0 && (
+            <Badge color="warning" size="md">
+              <AlertCircle className="h-4 w-4" />
               {pendingCount} pending requests
-            </span>
-          </div>
-        )}
-      </div>
+            </Badge>
+          )
+        }
+      />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded shadow border-l-4 border-l-[#4e73df] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase text-[#4e73df]">
-                Total Requests
-              </p>
-              <p className="text-xl font-bold text-gray-800 mt-1">
-                {requests.length}
-              </p>
-            </div>
-            <RefreshCw className="h-8 w-8 text-gray-300" />
-          </div>
-        </div>
-        <div className="bg-white rounded shadow border-l-4 border-l-[#f6c23e] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase text-[#f6c23e]">
-                Pending
-              </p>
-              <p className="text-xl font-bold text-gray-800 mt-1">
-                {pendingCount}
-              </p>
-            </div>
-            <RefreshCw className="h-8 w-8 text-gray-300" />
-          </div>
-        </div>
-        <div className="bg-white rounded shadow border-l-4 border-l-[#1cc88a] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase text-[#1cc88a]">
-                Approved
-              </p>
-              <p className="text-xl font-bold text-gray-800 mt-1">
-                {approvedCount}
-              </p>
-            </div>
-            <RefreshCw className="h-8 w-8 text-gray-300" />
-          </div>
-        </div>
-        <div className="bg-white rounded shadow border-l-4 border-l-[#e74a3b] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase text-[#e74a3b]">
-                Rejected
-              </p>
-              <p className="text-xl font-bold text-gray-800 mt-1">
-                {rejectedCount}
-              </p>
-            </div>
-            <RefreshCw className="h-8 w-8 text-gray-300" />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
+        <MetricCard
+          title="Total Requests"
+          value={requests.length.toString()}
+          icon={
+            <RefreshCw className="text-gray-800 dark:text-white/90 w-6 h-6" />
+          }
+          iconBgColor="bg-brand-50 dark:bg-brand-500/15"
+        />
+        <MetricCard
+          title="Pending"
+          value={pendingCount.toString()}
+          icon={<Clock className="text-gray-800 dark:text-white/90 w-6 h-6" />}
+          iconBgColor="bg-amber-50 dark:bg-amber-500/15"
+        />
+        <MetricCard
+          title="Approved"
+          value={approvedCount.toString()}
+          icon={
+            <CheckCircle className="text-gray-800 dark:text-white/90 w-6 h-6" />
+          }
+          iconBgColor="bg-green-50 dark:bg-green-500/15"
+        />
+        <MetricCard
+          title="Rejected"
+          value={rejectedCount.toString()}
+          icon={
+            <XCircle className="text-gray-800 dark:text-white/90 w-6 h-6" />
+          }
+          iconBgColor="bg-red-50 dark:bg-red-500/15"
+        />
       </div>
 
-      {/* Requests Table */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h6 className="text-[#4e73df] font-bold">All Requests</h6>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Requests</CardTitle>
+        </CardHeader>
 
         {requests.length === 0 ? (
           <div className="text-center py-16">
             <RefreshCw className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No refund requests yet</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              No refund requests yet
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+          <div className="max-w-full overflow-x-auto">
+            <Table>
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <TableRow>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Ticket
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Flight
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-sm dark:text-gray-400"
+                  >
                     Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {requests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                  <TableRow
+                    key={request.id}
+                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  >
+                    <TableCell className="px-5 py-4 text-start">
                       <div>
-                        <p className="font-medium text-gray-800">
+                        <p className="font-medium text-gray-800 dark:text-white/90">
                           {request.ticket.customer.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {request.ticket.customer.email}
                         </p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-mono text-sm text-[#4e73df]">
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <span className="font-mono text-sm text-brand-500">
                         {request.ticket.code}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
                       <div>
-                        <p className="font-medium text-gray-800">
+                        <p className="font-medium text-gray-800 dark:text-white/90">
                           {request.ticket.flight.departureCityCode} →{" "}
                           {request.ticket.flight.destinationCityCode}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {request.ticket.flight.plane.name}
                         </p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
-                          request.type === "REFUND"
-                            ? "bg-[#e74a3b]/10 text-[#e74a3b]"
-                            : "bg-[#36b9cc]/10 text-[#36b9cc]"
-                        }`}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <Badge
+                        size="sm"
+                        color={request.type === "REFUND" ? "error" : "info"}
                       >
                         {request.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-800">
-                        {formatCurrency(request.ticket.price)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-gray-800 font-medium text-sm dark:text-white/90">
+                      {formatCurrency(request.ticket.price)}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <Badge
+                        size="sm"
+                        color={
                           request.status === "PENDING"
-                            ? "bg-[#f6c23e]/10 text-[#f6c23e]"
+                            ? "warning"
                             : request.status === "APPROVED"
-                            ? "bg-[#1cc88a]/10 text-[#1cc88a]"
-                            : "bg-[#e74a3b]/10 text-[#e74a3b]"
-                        }`}
+                            ? "success"
+                            : "error"
+                        }
                       >
                         {request.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-gray-500 text-sm dark:text-gray-400">
                       {formatDate(request.createdAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/dashboard/refund-requests/${request.id}`}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-[#4e73df] hover:bg-[#2e59d9] rounded transition-colors"
-                      >
-                        View
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-start">
+                      <Link href={`/dashboard/refund-requests/${request.id}`}>
+                        <Button size="sm">View</Button>
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
