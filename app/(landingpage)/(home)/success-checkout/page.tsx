@@ -21,10 +21,18 @@ export default async function SuccessCheckoutPage() {
     redirect("/");
   }
 
+  // Get tickets created around the same time (within 30 seconds of latest)
+  // This handles sequential ticket creation in transaction
+  const bookingTimeWindow = new Date(latestTicket.bookingDate);
+  bookingTimeWindow.setSeconds(bookingTimeWindow.getSeconds() - 30);
+
   const tickets = await prisma.ticket.findMany({
     where: {
       customerId: user.id,
-      bookingDate: latestTicket.bookingDate,
+      bookingDate: {
+        gte: bookingTimeWindow,
+        lte: latestTicket.bookingDate,
+      },
     },
     include: {
       flight: {
@@ -34,6 +42,11 @@ export default async function SuccessCheckoutPage() {
       },
       seat: true,
       passenger: true,
+    },
+    orderBy: {
+      seat: {
+        seatNumber: "asc",
+      },
     },
   });
 

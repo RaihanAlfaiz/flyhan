@@ -10,7 +10,8 @@ export async function checkoutTicket(
   totalPrice: number,
   passengerData: { seatId: string; name: string; passport?: string }[],
   promoCodeId?: string,
-  selectedAddons?: { addonId: string; requestDetail?: string }[]
+  // Updated: Now per-passenger addons
+  selectedAddons?: { seatId: string; addonId: string; requestDetail?: string }[]
 ) {
   const { session, user } = await getUser();
 
@@ -54,62 +55,80 @@ export async function checkoutTicket(
   const pricePerTicket = Math.floor(totalPrice / seatIds.length);
 
   try {
-    await prisma.$transaction(async (tx) => {
-      for (const seatId of seatIds) {
-        // Generate random code for EACH ticket
-        const code = `TRX-${Math.random()
-          .toString(36)
-          .substring(2, 8)
-          .toUpperCase()}`;
+    // Use longer timeout for complex transactions
+    // Create consistent booking date for all tickets in this transaction
+    const bookingDate = new Date();
 
-        const passengerDataRaw = passengerData.find((p) => p.seatId === seatId);
+    await prisma.$transaction(
+      async (tx) => {
+        for (const seatId of seatIds) {
+          // Generate random code for EACH ticket
+          const code = `TRX-${Math.random()
+            .toString(36)
+            .substring(2, 8)
+            .toUpperCase()}`;
 
-        let newPassengerId = null;
-        if (passengerDataRaw) {
-          const newPassenger = await tx.passenger.create({
+          const passengerDataRaw = passengerData.find(
+            (p) => p.seatId === seatId
+          );
+
+          let newPassengerId = null;
+          if (passengerDataRaw) {
+            const newPassenger = await tx.passenger.create({
+              data: {
+                name: passengerDataRaw.name,
+                passport: passengerDataRaw.passport,
+              },
+            });
+            newPassengerId = newPassenger.id;
+          }
+
+          const newTicket = await tx.ticket.create({
             data: {
-              name: passengerDataRaw.name,
-              passport: passengerDataRaw.passport,
+              code,
+              flightId,
+              customerId: user.id,
+              seatId,
+              bookingDate, // Use shared booking date
+              price: BigInt(pricePerTicket),
+              status: "SUCCESS",
+              tokenMidtrans: `MID-${Date.now()}-${seatId}`,
+              // Relations
+              promoCodeId: promoCodeId || null,
+              passengerId: newPassengerId,
             },
           });
-          newPassengerId = newPassenger.id;
-        }
 
-        const newTicket = await tx.ticket.create({
-          data: {
-            code,
-            flightId,
-            customerId: user.id,
-            seatId,
-            bookingDate: new Date(),
-            price: BigInt(pricePerTicket),
-            status: "SUCCESS",
-            tokenMidtrans: `MID-${Date.now()}-${seatId}`,
-            // Relations
-            promoCodeId: promoCodeId || null,
-            passengerId: newPassengerId,
-          },
-        });
+          // Save Addons - Now filtered per seat
+          const addonsForThisSeat =
+            selectedAddons?.filter((addon) => addon.seatId === seatId) || [];
 
-        // Save Addons
-        if (selectedAddons && selectedAddons.length > 0) {
-          for (const addon of selectedAddons) {
+          for (const addon of addonsForThisSeat) {
             await tx.ticketAddon.create({
               data: {
                 ticketId: newTicket.id,
                 flightAddonId: addon.addonId,
-                requestDetail: addon.requestDetail,
+                requestDetail: addon.requestDetail || null,
               },
             });
           }
-        }
 
-        await tx.flightSeat.update({
-          where: { id: seatId },
-          data: { isBooked: true },
-        });
+          // Mark seat as booked and clear hold
+          await tx.flightSeat.update({
+            where: { id: seatId },
+            data: {
+              isBooked: true,
+              holdUntil: null,
+              heldByUserId: null,
+            },
+          });
+        }
+      },
+      {
+        maxWait: 10000, // 10 seconds max wait to acquire lock
+        timeout: 30000, // 30 seconds timeout for transaction
       }
-    });
+    );
   } catch (error) {
     console.error("Checkout validation error:", error);
     return { error: "Failed to process transaction" };

@@ -9,7 +9,7 @@ import { ChevronDown, Search, Check } from "lucide-react";
 interface Seat {
   id: string;
   seatNumber: string;
-  type: string;
+  type: string; // ECONOMY, BUSINESS, FIRST
 }
 
 interface PassengerFormProps {
@@ -17,13 +17,24 @@ interface PassengerFormProps {
   flightId: string;
 }
 
+// Title options with descriptions
+const TITLE_OPTIONS = [
+  { value: "Mr", label: "Mr.", description: "Adult Male" },
+  { value: "Mrs", label: "Mrs.", description: "Married Female" },
+  { value: "Ms", label: "Ms.", description: "Adult Female" },
+  { value: "Mstr", label: "Mstr.", description: "Child Male (2-11)" },
+  { value: "Miss", label: "Miss", description: "Child Female (2-11)" },
+];
+
 export interface PassengerData {
   seatId: string;
   seatNumber: string;
+  seatType: string;
   title: string;
   fullName: string;
   nationality: string;
   passport?: string;
+  passengerType: "adult" | "child"; // Derived from title
 }
 
 // Custom Country Select Component
@@ -220,16 +231,23 @@ export default function PassengerForm({ seats, flightId }: PassengerFormProps) {
     }
 
     // Default Initialization
-    const initialData = seats.map((seat) => ({
+    const initialData: PassengerData[] = seats.map((seat) => ({
       seatId: seat.id,
       seatNumber: seat.seatNumber,
+      seatType: seat.type,
       title: "Mr",
       fullName: "",
-      nationality: "Indonesia", // Default value
+      nationality: "Indonesia",
       passport: "",
+      passengerType: "adult",
     }));
     setPassengers(initialData);
   }, [seats, flightId]);
+
+  // Helper: Derive passenger type from title
+  const getPassengerTypeFromTitle = (title: string): "adult" | "child" => {
+    return title === "Mstr" || title === "Miss" ? "child" : "adult";
+  };
 
   const handleChange = (
     index: number,
@@ -238,6 +256,12 @@ export default function PassengerForm({ seats, flightId }: PassengerFormProps) {
   ) => {
     const updated = [...passengers];
     updated[index] = { ...updated[index], [field]: value };
+
+    // Auto-update passengerType when title changes
+    if (field === "title") {
+      updated[index].passengerType = getPassengerTypeFromTitle(value);
+    }
+
     setPassengers(updated);
   };
 
@@ -266,18 +290,36 @@ export default function PassengerForm({ seats, flightId }: PassengerFormProps) {
           className="bg-flysha-bg-purple p-6 rounded-[20px] border border-white/10 relative"
           style={{ zIndex: (passengers.length - index) * 50 }}
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-bold text-lg">
-              Passenger {index + 1}{" "}
-              <span className="text-flysha-off-purple text-sm font-normal">
-                {" "}
-                (Seat {passenger.seatNumber})
+          {/* Header with Seat Assignment */}
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-flysha-light-purple/20 to-flysha-light-purple/5 border border-flysha-light-purple/30">
+                <span className="text-flysha-light-purple font-bold text-lg">
+                  {passenger.seatNumber}
+                </span>
+                <span className="text-[10px] text-flysha-light-purple/70 uppercase">
+                  {passenger.seatType?.toLowerCase()}
+                </span>
+              </div>
+              <div>
+                <h2 className="font-bold text-lg text-white">
+                  Passenger {index + 1}
+                </h2>
+                <p className="text-sm text-flysha-off-purple">
+                  {passenger.passengerType === "child" ? "Child" : "Adult"} •
+                  Seat {passenger.seatNumber}
+                </p>
+              </div>
+            </div>
+            {passenger.passengerType === "child" && (
+              <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                Child (2-11 yrs)
               </span>
-            </h2>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Title */}
+            {/* Title - Enhanced with descriptions */}
             <div
               className="flex flex-col gap-2 relative"
               style={{ zIndex: 60 }}
@@ -295,9 +337,11 @@ export default function PassengerForm({ seats, flightId }: PassengerFormProps) {
                   onChange={(e) => handleChange(index, "title", e.target.value)}
                   className="w-full bg-flysha-black text-white px-4 py-3 rounded-xl border border-white/20 appearance-none focus:outline-none focus:border-flysha-light-purple cursor-pointer"
                 >
-                  <option value="Mr">Mr.</option>
-                  <option value="Mrs">Mrs.</option>
-                  <option value="Ms">Ms.</option>
+                  {TITLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} ({option.description})
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                   <Image

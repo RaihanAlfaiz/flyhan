@@ -91,10 +91,18 @@ export default function CheckoutContent({
       .padStart(2, "0")}`;
   };
 
-  // State for Addons: Storing ID, Price, and optional Request Detail
-  const [selectedAddons, setSelectedAddons] = useState<
-    { id: string; price: number; title: string; requestDetail?: string }[]
-  >([]);
+  // Addon type for per-passenger addons
+  type PassengerAddon = {
+    id: string;
+    price: number;
+    title: string;
+    requestDetail?: string;
+  };
+
+  // State for Addons: Now per-passenger (keyed by seatId)
+  const [passengerAddons, setPassengerAddons] = useState<
+    Record<string, PassengerAddon[]>
+  >({});
 
   // Load Passengers from Session Storage
   useEffect(() => {
@@ -108,10 +116,12 @@ export default function CheckoutContent({
       const dummy: PassengerData[] = seats.map((s) => ({
         seatId: s.id,
         seatNumber: s.seatNumber,
+        seatType: s.type,
         title: "Mr",
         fullName: user.name,
         nationality: "Indonesia",
         passport: user.passport || "-",
+        passengerType: "adult" as const,
       }));
       setPassengers(dummy);
     }
@@ -131,9 +141,12 @@ export default function CheckoutContent({
     }
   });
 
-  // Calculate Addon Price total (Addon Price * Number of Seats)
-  const totalAddonPrice =
-    selectedAddons.reduce((acc, curr) => acc + curr.price, 0) * seats.length;
+  // Calculate total addon price across all passengers
+  const totalAddonPrice = Object.values(passengerAddons).reduce(
+    (total, addons) =>
+      total + addons.reduce((sum, addon) => sum + addon.price, 0),
+    0
+  );
 
   const insurancePrice = Math.round(totalSeatPrice * 0.1);
   const taxPrice = Math.round(totalSeatPrice * 0.11);
@@ -141,29 +154,66 @@ export default function CheckoutContent({
     totalSeatPrice + totalAddonPrice + insurancePrice + taxPrice;
   const grandTotal = Math.max(0, grandTotalBeforeDiscount - discount);
 
-  // Toggle Logic
-  const toggleAddon = (addon: FlightAddon) => {
-    setSelectedAddons((prev) => {
-      const exists = prev.find((a) => a.id === addon.id);
+  // Get total addon count
+  const totalAddonCount = Object.values(passengerAddons).reduce(
+    (total, addons) => total + addons.length,
+    0
+  );
+
+  // Toggle addon for a specific passenger
+  const togglePassengerAddon = (seatId: string, addon: FlightAddon) => {
+    setPassengerAddons((prev) => {
+      const currentAddons = prev[seatId] || [];
+      const exists = currentAddons.find((a) => a.id === addon.id);
+
       if (exists) {
-        return prev.filter((a) => a.id !== addon.id);
-      } else {
-        return [
+        // Remove addon
+        return {
           ...prev,
-          {
-            id: addon.id,
-            price: addon.price,
-            title: addon.title,
-            requestDetail: "",
-          },
-        ];
+          [seatId]: currentAddons.filter((a) => a.id !== addon.id),
+        };
+      } else {
+        // Add addon
+        return {
+          ...prev,
+          [seatId]: [
+            ...currentAddons,
+            {
+              id: addon.id,
+              price: addon.price,
+              title: addon.title,
+              requestDetail: "",
+            },
+          ],
+        };
       }
     });
   };
 
-  const updateAddonRequest = (id: string, detail: string) => {
-    setSelectedAddons((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, requestDetail: detail } : a))
+  // Update addon request detail for a specific passenger
+  const updatePassengerAddonRequest = (
+    seatId: string,
+    addonId: string,
+    detail: string
+  ) => {
+    setPassengerAddons((prev) => ({
+      ...prev,
+      [seatId]: (prev[seatId] || []).map((a) =>
+        a.id === addonId ? { ...a, requestDetail: detail } : a
+      ),
+    }));
+  };
+
+  // Check if addon is selected for a passenger
+  const isAddonSelectedForPassenger = (seatId: string, addonId: string) => {
+    return (passengerAddons[seatId] || []).some((a) => a.id === addonId);
+  };
+
+  // Get addon request detail for a passenger
+  const getAddonRequestDetail = (seatId: string, addonId: string) => {
+    return (
+      (passengerAddons[seatId] || []).find((a) => a.id === addonId)
+        ?.requestDetail || ""
     );
   };
 
@@ -236,7 +286,7 @@ export default function CheckoutContent({
       html: `
         <div class="text-left text-sm">
             <p>Total: <b>${formatCurrency(grandTotal)}</b></p>
-            <p>Includes ${selectedAddons.length} extra services</p>
+            <p>Includes ${totalAddonCount} extra services</p>
             <p>Promo: ${appliedPromo || "-"}</p>
         </div>
       `,
@@ -258,11 +308,15 @@ export default function CheckoutContent({
         passport: p.passport,
       }));
 
-      // Map addons for server
-      const addonsForServer = selectedAddons.map((a) => ({
-        addonId: a.id,
-        requestDetail: a.requestDetail,
-      }));
+      // Flatten per-passenger addons for server
+      const addonsForServer = Object.entries(passengerAddons).flatMap(
+        ([seatId, addons]) =>
+          addons.map((a) => ({
+            seatId,
+            addonId: a.id,
+            requestDetail: a.requestDetail,
+          }))
+      );
 
       const res = await checkoutTicket(
         flight.id,
@@ -408,68 +462,107 @@ export default function CheckoutContent({
 
         {/* RIGHT COLUMN */}
         <div className="flex flex-col mt-[10px] gap-[30px] flex-1">
-          {/* Additional Benefits / Flight Addons */}
+          {/* Additional Benefits / Flight Addons - Now Per Passenger */}
           <div className="flex flex-col gap-4">
-            <p className="font-semibold">Additional Services</p>
-            {addons && addons.length > 0 ? (
-              addons.map((addon) => {
-                const isSelected = selectedAddons.some(
-                  (a) => a.id === addon.id
-                );
-                return (
-                  <div
-                    key={addon.id}
-                    className={`flex flex-col p-4 rounded-[20px] ring-1 transition-all ${
-                      isSelected
-                        ? "ring-flysha-light-purple bg-flysha-light-purple/10"
-                        : "ring-white hover:ring-white/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          onClick={() => toggleAddon(addon)}
-                          className={`w-6 h-6 rounded flex items-center justify-center border cursor-pointer transition-colors ${
-                            isSelected
-                              ? "bg-flysha-light-purple border-flysha-light-purple"
-                              : "border-white/50 hover:border-white"
-                          }`}
-                        >
-                          {isSelected && (
-                            <CheckCircle2 className="w-4 h-4 text-flysha-black" />
-                          )}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-bold">{addon.title}</span>
-                          <span className="text-sm text-gray-400">
-                            {addon.description}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="font-bold">
-                        {formatCurrency(addon.price)}
+            <p className="font-semibold">Additional Services (Per Passenger)</p>
+
+            {passengers.length > 0 && addons && addons.length > 0 ? (
+              passengers.map((passenger) => (
+                <div
+                  key={passenger.seatId}
+                  className="bg-flysha-bg-purple/50 rounded-[20px] p-4 border border-white/10"
+                >
+                  {/* Passenger Header */}
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-flysha-light-purple/20 border border-flysha-light-purple/30">
+                      <span className="text-flysha-light-purple font-bold text-sm">
+                        {passenger.seatNumber}
                       </span>
                     </div>
-
-                    {isSelected && (
-                      <div className="mt-3 pl-10">
-                        <input
-                          type="text"
-                          placeholder="Specify request (e.g. halal meal, pickup location)..."
-                          className="w-full bg-flysha-black border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-flysha-light-purple transition-colors"
-                          value={
-                            selectedAddons.find((a) => a.id === addon.id)
-                              ?.requestDetail || ""
-                          }
-                          onChange={(e) =>
-                            updateAddonRequest(addon.id, e.target.value)
-                          }
-                        />
-                      </div>
-                    )}
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {passenger.fullName ||
+                          `Passenger ${passengers.indexOf(passenger) + 1}`}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {(passengerAddons[passenger.seatId] || []).length}{" "}
+                        service(s) selected
+                      </p>
+                    </div>
                   </div>
-                );
-              })
+
+                  {/* Addon List for this Passenger */}
+                  <div className="flex flex-col gap-2">
+                    {addons.map((addon) => {
+                      const isSelected = isAddonSelectedForPassenger(
+                        passenger.seatId,
+                        addon.id
+                      );
+                      return (
+                        <div
+                          key={addon.id}
+                          className={`flex flex-col p-3 rounded-xl transition-all ${
+                            isSelected
+                              ? "bg-flysha-light-purple/20 ring-1 ring-flysha-light-purple"
+                              : "bg-flysha-black/30 hover:bg-flysha-black/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div
+                                onClick={() =>
+                                  togglePassengerAddon(passenger.seatId, addon)
+                                }
+                                className={`w-5 h-5 rounded flex items-center justify-center border cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? "bg-flysha-light-purple border-flysha-light-purple"
+                                    : "border-white/50 hover:border-white"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <CheckCircle2 className="w-3 h-3 text-flysha-black" />
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">
+                                  {addon.title}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {addon.description}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-sm text-flysha-light-purple">
+                              {formatCurrency(addon.price)}
+                            </span>
+                          </div>
+
+                          {isSelected && (
+                            <div className="mt-2 pl-8">
+                              <input
+                                type="text"
+                                placeholder="Special request (e.g. halal meal)..."
+                                className="w-full bg-flysha-black border border-white/20 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-flysha-light-purple transition-colors"
+                                value={getAddonRequestDetail(
+                                  passenger.seatId,
+                                  addon.id
+                                )}
+                                onChange={(e) =>
+                                  updatePassengerAddonRequest(
+                                    passenger.seatId,
+                                    addon.id,
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
             ) : (
               <p className="text-gray-500 text-sm">
                 No additional services available.
@@ -528,7 +621,7 @@ export default function CheckoutContent({
             </div>
             {totalAddonPrice > 0 && (
               <div className="flex justify-between">
-                <span>Add-ons ({selectedAddons.length})</span>
+                <span>Add-ons ({totalAddonCount})</span>
                 <span className="font-semibold">
                   {formatCurrency(totalAddonPrice)}
                 </span>
