@@ -13,12 +13,12 @@ export const getPublicUrl = (path: string) => {
   return data.publicUrl;
 };
 
-export const uploadFile = async (file: File) => {
+export const uploadFile = async (file: File, folder: string = "airplanes") => {
   try {
-    const filename = `${Date.now()}-${file.name}`;
+    const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
     const { data, error } = await supabase.storage
       .from("ImageUpload")
-      .upload(`public/airplanes/${filename}`, file, {
+      .upload(`public/${folder}/${filename}`, file, {
         cacheControl: "3600",
         upsert: false,
       });

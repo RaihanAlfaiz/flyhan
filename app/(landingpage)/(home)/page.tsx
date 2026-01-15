@@ -13,8 +13,10 @@ import BestSelectiveSection from "../components/best-selective-section";
 import FlashSaleSection from "../components/flash-sale-section";
 import PackagesSection from "../components/packages-section";
 
+import { User } from "lucia";
+
 // Reusable components
-function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
+function Navbar({ user }: { user: User | null }) {
   return (
     <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]">
       <Link href="/" className="flex items-center shrink-0">
@@ -67,22 +69,31 @@ function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
             About
           </Link>
         </li>
-        {isLoggedIn ? (
-          <>
+        {user ? (
+          <div className="flex items-center gap-4">
             <Link
               href="/my-tickets"
-              className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
+              className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[20px] py-[10px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] text-sm"
             >
               My Tickets
             </Link>
-            <Link
-              href="/my-packages"
-              className="font-bold text-white border-2 border-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:bg-flysha-light-purple hover:text-flysha-black"
-            >
-              My Packages
+
+            <Link href="/profile/settings" title="Profile Settings">
+              <div className="w-[48px] h-[48px] rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-transparent hover:border-flysha-light-purple transition-all">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    className="w-full h-full object-cover"
+                    alt="avatar"
+                  />
+                ) : (
+                  <span className="font-bold text-flysha-black">
+                    {user.name.substring(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
             </Link>
-            <ButtonLogout />
-          </>
+          </div>
         ) : (
           <Link
             href="/signin"
@@ -339,7 +350,7 @@ function Footer() {
 }
 
 export default async function Home() {
-  const { session } = await getUser();
+  const { session, user } = await getUser();
   const isLoggedIn = !!session;
   const cities = await getAllCities();
   // Fetch unlimited/latest selectives
@@ -355,7 +366,7 @@ export default async function Home() {
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top -z-10"
       >
         <div className="bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] z-0">
-          <Navbar isLoggedIn={isLoggedIn} />
+          <Navbar user={user} />
 
           {/* Hero Section */}
           <div className="hero-section container max-w-[1130px] w-full mx-auto flex flex-col gap-[90px] mt-[103px]">

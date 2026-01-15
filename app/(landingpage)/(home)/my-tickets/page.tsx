@@ -98,9 +98,19 @@ export default async function MyTicketsPage() {
                   My Tickets
                 </Link>
               </li>
-              <div className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center">
-                {user.name.substring(0, 2).toUpperCase()}
-              </div>
+              <Link href="/profile/settings">
+                <div className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center overflow-hidden">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      className="w-full h-full object-cover"
+                      alt="avatar"
+                    />
+                  ) : (
+                    user.name.substring(0, 2).toUpperCase()
+                  )}
+                </div>
+              </Link>
             </ul>
           </nav>
           <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px]">

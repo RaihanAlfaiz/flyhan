@@ -19,6 +19,7 @@ export const lucia = new Lucia(adapter, {
       email: attributes.email,
       role: attributes.role,
       passport: attributes.passport,
+      avatar: attributes.avatar,
     };
   },
 });
@@ -59,6 +60,7 @@ declare module "lucia" {
       email: string;
       role: string;
       passport: string | null;
+      avatar: string | null;
     };
   }
 }

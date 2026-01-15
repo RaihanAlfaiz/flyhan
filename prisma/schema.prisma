@@ -53,6 +53,7 @@ model User {
   email         String         @unique
   password      String
   passport      String?
+  avatar        String?
   role          RoleUser
   tickets       Ticket[]
   sessions      Session[]
