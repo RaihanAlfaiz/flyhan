@@ -32,7 +32,15 @@ export default async function Navbar() {
           </li>
           <li>
             <Link
-              href="#"
+              href="/#FlashSale"
+              className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            >
+              Flash Sale
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/#Discover"
               className="font-medium text-white hover:text-flysha-light-purple transition-colors"
             >
               Discover
@@ -40,7 +48,23 @@ export default async function Navbar() {
           </li>
           <li>
             <Link
-              href="#"
+              href="/#Packages"
+              className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            >
+              Packages
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/#Stories"
+              className="font-medium text-white hover:text-flysha-light-purple transition-colors"
+            >
+              Stories
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/#About"
               className="font-medium text-white hover:text-flysha-light-purple transition-colors"
             >
               About

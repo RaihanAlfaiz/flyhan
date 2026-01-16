@@ -14,88 +14,12 @@ import SearchForm from "../components/search-form";
 import BestSelectiveSection from "../components/best-selective-section";
 import FlashSaleSection from "../components/flash-sale-section";
 import PackagesSection from "../components/packages-section";
+import Footer from "../components/footer";
+import Navbar from "../components/navbar";
 
 import { User } from "lucia";
 
 // Reusable components
-function Navbar({ user }: { user: User | null }) {
-  return (
-    <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]">
-      <Link href="/" className="flex items-center shrink-0">
-        <Image
-          src="/assets/images/logos/logo.svg"
-          alt="FlyHan Logo"
-          width={120}
-          height={40}
-          priority
-        />
-      </Link>
-      <ul className="flex gap-[30px] items-center w-fit">
-        <li>
-          <Link
-            href="#FlashSale"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
-          >
-            Flash Sale
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#Discover"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
-          >
-            Discover
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#Packages"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
-          >
-            Packages
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#Stories"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
-          >
-            Stories
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#About"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors scroll-smooth"
-          >
-            About
-          </Link>
-        </li>
-        {user ? (
-          <div className="flex items-center gap-4">
-            <NotificationDropdown />
-            <Link
-              href="/wishlist"
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              title="My Wishlist"
-            >
-              <Heart className="w-6 h-6 text-white hover:text-pink-500 transition-colors" />
-            </Link>
-
-            <UserDropdown user={user} />
-          </div>
-        ) : (
-          <Link
-            href="/signin"
-            className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
-          >
-            Sign In
-          </Link>
-        )}
-      </ul>
-    </nav>
-  );
-}
 
 function LogoSlider() {
   return (
@@ -187,158 +111,6 @@ function TestimonialCard() {
   );
 }
 
-function Footer() {
-  return (
-    <footer
-      id="About"
-      className="flex flex-col justify-between mt-[150px] border-t-[6px] border-flysha-light-purple p-[100px_10px_30px]"
-    >
-      <div className="container max-w-[1130px] mx-auto flex justify-between relative">
-        <Image
-          src="/assets/images/icons/Ellipse 4.png"
-          className="absolute h-[300px] -top-[45px] -left-[20px] z-0"
-          alt="decoration"
-          width={300}
-          height={300}
-        />
-        <div className="flex shrink-0 h-fit z-10">
-          <Image
-            src="/assets/images/logos/logo.svg"
-            alt="FlyHan Logo"
-            width={120}
-            height={40}
-          />
-        </div>
-        <div className="flex gap-[100px] z-10">
-          <div className="flex flex-col gap-5">
-            <p className="font-bold text-lg">Explore</p>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Services
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Testimonials
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              About
-            </Link>
-          </div>
-          <div className="flex flex-col gap-5">
-            <p className="font-bold text-lg">Services</p>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Pickup at Home
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              First Lounge Plus
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Business Room
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Bentley Power
-            </Link>
-          </div>
-          <div className="flex flex-col gap-5">
-            <p className="font-bold text-lg">About</p>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Company Profile
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Our Investors
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Media Press
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300"
-            >
-              Careers
-            </Link>
-          </div>
-          <div className="flex flex-col gap-5">
-            <p className="font-bold text-lg">Connect</p>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300 flex items-center gap-[6px]"
-            >
-              <Image
-                src="/assets/images/icons/call.svg"
-                alt="icon"
-                width={20}
-                height={20}
-              />
-              +1 2208 1996
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300 flex items-center gap-[6px]"
-            >
-              <Image
-                src="/assets/images/icons/dribbble.svg"
-                alt="icon"
-                width={20}
-                height={20}
-              />
-              Raihan Alfaiz
-            </Link>
-            <Link
-              href="#"
-              className="font-medium hover:font-semibold hover:text-flysha-light-purple transition-all duration-300 flex items-center gap-[6px]"
-            >
-              <Image
-                src="/assets/images/icons/sms.svg"
-                alt="icon"
-                width={20}
-                height={20}
-              />
-              raihanalfaiz80@gmail.com
-            </Link>
-          </div>
-        </div>
-      </div>
-      <p className="mx-auto mt-[60px] text-[#A0A0AC] text-sm z-10">
-        All Rights Reserved. Copyright FlyHan 2024.
-      </p>
-    </footer>
-  );
-}
-
 export default async function Home() {
   const { session, user } = await getUser();
   const isLoggedIn = !!session;
@@ -356,7 +128,7 @@ export default async function Home() {
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top -z-10"
       >
         <div className="bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] z-0">
-          <Navbar user={user} />
+          <Navbar />
 
           {/* Hero Section */}
           <div className="hero-section container max-w-[1130px] w-full mx-auto flex flex-col gap-[90px] mt-[103px]">
