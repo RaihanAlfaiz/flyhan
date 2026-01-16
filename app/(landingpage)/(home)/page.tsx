@@ -10,8 +10,10 @@ import {
   getAllPackages,
   getActiveFlashSales,
 } from "../lib/data";
-import SearchForm from "../components/search-form";
 import BestSelectiveSection from "../components/best-selective-section";
+import LandingHero from "../components/landing-hero";
+import ScrollReveal from "../components/scroll-reveal";
+import { TiltCard } from "../components/tilt-card";
 import FlashSaleSection from "../components/flash-sale-section";
 import PackagesSection from "../components/packages-section";
 import Footer from "../components/footer";
@@ -20,36 +22,6 @@ import Navbar from "../components/navbar";
 import { User } from "lucia";
 
 // Reusable components
-
-function LogoSlider() {
-  return (
-    <div className="w-full flex items-center py-[50px] overflow-hidden">
-      <div className="slider flex shrink-0 w-max">
-        {[1, 2, 3].map((group) => (
-          <div
-            key={group}
-            className="animate-[slide_10s_linear_infinite] flex gap-[50px] pl-[50px] items-center"
-          >
-            {[1, 2, 3, 4, 1, 2, 3, 4].map((num, index) => (
-              <div
-                key={`${group}-${index}`}
-                className="flex w-fit h-[30px] shrink-0"
-              >
-                <Image
-                  src={`/assets/images/logos/logoipsum${num}.png`}
-                  className="w-full h-full object-contain"
-                  alt="partner logo"
-                  width={100}
-                  height={30}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function ServiceCard({
   icon,
@@ -122,37 +94,13 @@ export default async function Home() {
 
   return (
     <div className="text-white font-sans bg-flysha-black">
-      {/* Header Section */}
-      <section
-        id="Header"
-        className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top -z-10"
-      >
-        <div className="bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] z-0">
-          <Navbar />
-
-          {/* Hero Section */}
-          <div className="hero-section container max-w-[1130px] w-full mx-auto flex flex-col gap-[90px] mt-[103px]">
-            <div className="title flex flex-col gap-[30px]">
-              <h1 className="font-extrabold text-[80px] leading-[90px]">
-                Best Flights. <br />
-                Cheaper Budget.
-              </h1>
-              <p className="font-medium text-lg leading-[36px]">
-                No more long queue, get more delicious heavy meals. <br />
-                Crafted by best talented people around the world.
-              </p>
-            </div>
-
-            {/* Search Form */}
-            <SearchForm cities={cities} />
-          </div>
-
-          <LogoSlider />
-        </div>
-      </section>
+      {/* Hero Section */}
+      <LandingHero navbar={<Navbar />} cities={cities} />
 
       {/* Flash Sale Section */}
-      <FlashSaleSection flashSales={flashSales} />
+      <ScrollReveal width="100%">
+        <FlashSaleSection flashSales={flashSales} />
+      </ScrollReveal>
 
       {/* Services Section */}
       <section
@@ -163,63 +111,87 @@ export default async function Home() {
           We Ensure You <br />
           Fly With Us Forever
         </h2>
-        <div className="flex justify-between">
-          <ServiceCard
-            icon="/assets/images/icons/profile-2user.svg"
-            title="Talented Crew"
-            description="Our jets protected by metal that can't be destroyed."
-          />
-          <ServiceCard
-            icon="/assets/images/icons/shield-tick.svg"
-            title="Safe Guard"
-            description="Our jets protected by metal that can't be destroyed."
-          />
-          <ServiceCard
-            icon="/assets/images/icons/crown.svg"
-            title="Best Awards"
-            description="Our jets protected by metal that can't be destroyed."
-          />
-          <ServiceCard
-            icon="/assets/images/icons/building-3.svg"
-            title="Pickup at Home"
-            description="Our jets protected by metal that can't be destroyed."
-          />
+        <div className="flex justify-between gap-4">
+          <ScrollReveal direction="up" delay={0.1}>
+            <TiltCard className="w-fit">
+              <ServiceCard
+                icon="/assets/images/icons/profile-2user.svg"
+                title="Talented Crew"
+                description="Our jets protected by metal that can't be destroyed."
+              />
+            </TiltCard>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={0.2}>
+            <TiltCard className="w-fit">
+              <ServiceCard
+                icon="/assets/images/icons/shield-tick.svg"
+                title="Safe Guard"
+                description="Our jets protected by metal that can't be destroyed."
+              />
+            </TiltCard>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={0.3}>
+            <TiltCard className="w-fit">
+              <ServiceCard
+                icon="/assets/images/icons/crown.svg"
+                title="Best Awards"
+                description="Our jets protected by metal that can't be destroyed."
+              />
+            </TiltCard>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={0.4}>
+            <TiltCard className="w-fit">
+              <ServiceCard
+                icon="/assets/images/icons/building-3.svg"
+                title="Pickup at Home"
+                description="Our jets protected by metal that can't be destroyed."
+              />
+            </TiltCard>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Discover Section */}
-      <BestSelectiveSection selectives={selectives} />
+      <ScrollReveal width="100%">
+        <BestSelectiveSection selectives={selectives} />
+      </ScrollReveal>
 
       {/* Packages Section */}
-      <PackagesSection packages={packages} />
+      <ScrollReveal width="100%">
+        <PackagesSection packages={packages} />
+      </ScrollReveal>
 
       {/* Stories (Testimonials) Section */}
       <section
         id="Stories"
         className="w-full flex flex-col pt-[100px] gap-[30px]"
       >
-        <div className="flex flex-col gap-[6px] items-center">
-          <h2 className="font-bold text-[32px] leading-[48px] text-center">
-            Travel Stories
-          </h2>
-          <p className="font-medium text-flysha-off-purple">
-            Read about experiences from our happy travelers
-          </p>
-        </div>
-        <div className="testimonial-slider w-full overflow-hidden">
-          <div className="slider flex shrink-0 w-max">
-            {[1, 2, 3].map((group) => (
-              <div
-                key={group}
-                className="animate-[slide_15s_linear_infinite] flex gap-[30px] pl-[30px] items-center h-[228px]"
-              >
-                {[1, 2, 3, 4].map((card) => (
-                  <TestimonialCard key={`${group}-${card}`} />
-                ))}
-              </div>
-            ))}
+        <ScrollReveal width="100%">
+          <div className="flex flex-col gap-[6px] items-center">
+            <h2 className="font-bold text-[32px] leading-[48px] text-center">
+              Travel Stories
+            </h2>
+            <p className="font-medium text-flysha-off-purple">
+              Read about experiences from our happy travelers
+            </p>
           </div>
-        </div>
+        </ScrollReveal>
+        <ScrollReveal width="100%" delay={0.2}>
+          <div className="testimonial-slider w-full overflow-hidden">
+            <div className="slider flex shrink-0 w-max">
+              {[1, 2, 3].map((group) => (
+                <div
+                  key={group}
+                  className="animate-[slide_15s_linear_infinite] flex gap-[30px] pl-[30px] items-center h-[228px]"
+                >
+                  {[1, 2, 3, 4].map((card) => (
+                    <TestimonialCard key={`${group}-${card}`} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
       </section>
 
       <Footer />
