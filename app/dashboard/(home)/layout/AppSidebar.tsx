@@ -19,6 +19,7 @@ import {
   ShoppingBag,
   Zap,
   ScanLine,
+  Settings,
 } from "lucide-react";
 
 type NavItem = {
@@ -127,6 +128,16 @@ const navGroups: NavGroup[] = [
         icon: <Star className="w-5 h-5" />,
         name: "Best Selectives",
         path: "/dashboard/best-selectives",
+      },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      {
+        icon: <Settings className="w-5 h-5" />,
+        name: "Settings",
+        path: "/dashboard/settings",
       },
     ],
   },

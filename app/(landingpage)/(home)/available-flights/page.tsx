@@ -5,6 +5,8 @@ import { getUser } from "@/lib/auth";
 import ButtonLogout from "../../components/button-logout";
 import FlightFilters from "./components/flight-filters";
 import FlightCard from "./components/flight-card";
+import RoundTripFlightList from "./components/round-trip-list";
+import { getRoundTripDiscount } from "../checkout/round-trip/lib/actions";
 
 // Format currency
 function formatCurrency(amount: number): string {
@@ -95,6 +97,15 @@ interface PageProps {
     seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
     passengers?: string;
     error?: string;
+    // New filter params
+    sort?: "price_asc" | "price_desc" | "departure_asc" | "departure_desc";
+    time?: "morning" | "afternoon" | "evening" | "night";
+    minPrice?: string;
+    maxPrice?: string;
+    airlines?: string;
+    // Round trip
+    roundTrip?: string;
+    returnDate?: string;
   }>;
 }
 
@@ -102,9 +113,30 @@ export default async function AvailableFlightsPage({
   searchParams,
 }: PageProps) {
   const params = await searchParams;
-  const { departure, arrival, date, seatType, passengers, error } = params;
+  const {
+    departure,
+    arrival,
+    date,
+    seatType,
+    passengers,
+    error,
+    sort,
+    time,
+    minPrice,
+    maxPrice,
+    airlines,
+  } = params;
 
   const passengerCount = passengers ? parseInt(passengers, 10) : 1;
+  const parsedMinPrice = minPrice ? parseInt(minPrice, 10) : undefined;
+  const parsedMaxPrice = maxPrice ? parseInt(maxPrice, 10) : undefined;
+  const parsedAirlines = airlines
+    ? airlines.split(",").filter(Boolean)
+    : undefined;
+
+  // Round trip params
+  const isRoundTrip = params.roundTrip === "true";
+  const returnDateParam = params.returnDate;
 
   // Fetch flights based on search params
   const flights = await searchFlights({
@@ -113,16 +145,46 @@ export default async function AvailableFlightsPage({
     date: date,
     seatType: seatType,
     passengerCount: passengerCount,
+    sort: sort,
+    time: time,
+    minPrice: parsedMinPrice,
+    maxPrice: parsedMaxPrice,
+    airlines: parsedAirlines,
   });
+
+  // Fetch return flights if round trip
+  let returnFlights: typeof flights = [];
+  if (isRoundTrip && returnDateParam) {
+    returnFlights = await searchFlights({
+      departureCode: arrival, // Swap departure and arrival
+      arrivalCode: departure,
+      date: returnDateParam,
+      seatType: seatType,
+      passengerCount: passengerCount,
+      sort: sort,
+      time: time,
+      minPrice: parsedMinPrice,
+      maxPrice: parsedMaxPrice,
+      airlines: parsedAirlines,
+    });
+  }
 
   // Fetch airplanes for filter
   const airplanes = await getAirplanes();
+
+  // Calculate max price for slider
+  const allPrices = flights.map((f) => f.priceEconomy);
+  const calculatedMaxPrice =
+    allPrices.length > 0 ? Math.max(...allPrices) : 10000000;
 
   // Get city names for header
   const departureCity =
     flights.length > 0 ? flights[0].departureCity : departure || "Any";
   const arrivalCity =
     flights.length > 0 ? flights[0].destinationCity : arrival || "Any";
+
+  // Get round trip discount for display
+  const roundTripDiscount = isRoundTrip ? await getRoundTripDiscount() : 0;
 
   return (
     <div className="text-white font-sans bg-flysha-black min-h-screen">
@@ -151,6 +213,14 @@ export default async function AvailableFlightsPage({
                   <span className="text-flysha-light-purple">•</span>
                   <span className="text-flysha-light-purple capitalize">
                     {seatType.toLowerCase()}
+                  </span>
+                </>
+              )}
+              {isRoundTrip && (
+                <>
+                  <span className="text-flysha-light-purple">•</span>
+                  <span className="bg-flysha-light-purple text-flysha-black px-2 py-0.5 rounded-full text-sm font-bold">
+                    Round Trip
                   </span>
                 </>
               )}
@@ -194,46 +264,60 @@ export default async function AvailableFlightsPage({
             arrival={arrival}
             date={date}
             passengers={passengers}
+            maxPrice={calculatedMaxPrice}
           />
 
           {/* Flight Cards */}
-          <div className="ticket-container flex flex-col w-full gap-6">
-            {flights.length > 0 ? (
-              <>
-                {flights.map((flight) => (
-                  <FlightCard
-                    key={flight.id}
-                    flight={flight}
-                    seatType={seatType}
+          {isRoundTrip ? (
+            <RoundTripFlightList
+              departureFlights={flights}
+              returnFlights={returnFlights}
+              seatType={seatType}
+              departureCity={departureCity}
+              arrivalCity={arrivalCity}
+              date={date}
+              returnDate={returnDateParam}
+              discountPercent={roundTripDiscount}
+            />
+          ) : (
+            <div className="ticket-container flex flex-col w-full gap-6">
+              {flights.length > 0 ? (
+                <>
+                  {flights.map((flight) => (
+                    <FlightCard
+                      key={flight.id}
+                      flight={flight}
+                      seatType={seatType}
+                    />
+                  ))}
+                  <p className="text-center text-sm text-[#A0A0AC] h-fit">
+                    You&apos;ve reached the end of results.
+                  </p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <Image
+                    src="/assets/images/icons/airplane.svg"
+                    alt="No flights"
+                    width={80}
+                    height={80}
+                    className="opacity-30 mb-4"
                   />
-                ))}
-                <p className="text-center text-sm text-[#A0A0AC] h-fit">
-                  You&apos;ve reached the end of results.
-                </p>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Image
-                  src="/assets/images/icons/airplane.svg"
-                  alt="No flights"
-                  width={80}
-                  height={80}
-                  className="opacity-30 mb-4"
-                />
-                <h3 className="text-xl font-bold mb-2">No flights found</h3>
-                <p className="text-flysha-off-purple mb-6">
-                  Try adjusting your search filters or selecting different
-                  dates.
-                </p>
-                <Link
-                  href="/"
-                  className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
-                >
-                  Back to Search
-                </Link>
-              </div>
-            )}
-          </div>
+                  <h3 className="text-xl font-bold mb-2">No flights found</h3>
+                  <p className="text-flysha-off-purple mb-6">
+                    Try adjusting your search filters or selecting different
+                    dates.
+                  </p>
+                  <Link
+                    href="/"
+                    className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
+                  >
+                    Back to Search
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>

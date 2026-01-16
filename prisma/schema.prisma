@@ -169,14 +169,28 @@ model PromoCode {
 }
 
 model RefundRequest {
-  id          String       @id @default(cuid())
-  ticketId    String
-  ticket      Ticket       @relation(fields: [ticketId], references: [id])
-  type        RefundType
-  reason      String
-  status      RefundStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  ticketId      String
+  ticket        Ticket       @relation(fields: [ticketId], references: [id])
+  type          RefundType
+  reason        String
+  status        RefundStatus @default(PENDING)
+  
+  // Refund calculation
+  originalAmount  Int?         // Original ticket price
+  refundAmount    Int?         // Calculated refund amount
+  refundPercent   Int?         // Percentage of refund (100, 75, 50, 25, 0)
+  
+  // Reschedule fields
+  newFlightId   String?
+  newSeatId     String?
+  
+  // Admin processing
+  adminNotes    String?
+  processedAt   DateTime?
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model BestSelective {
@@ -235,4 +249,46 @@ model PackageOrder {
   tokenMidtrans String?
   orderDate     DateTime           @default(now())
   notes         String?
+}
+
+// App Settings for configurable values
+model AppSettings {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String
+  description     String?
+  updatedAt       DateTime @updatedAt
+}
+
+// Round Trip Booking - bundles departure and return tickets
+model RoundTripBooking {
+  id                String       @id @default(cuid())
+  code              String       @unique
+  customerId        String
+  
+  // Departure flight info
+  departureFlightId String
+  departureSeatId   String
+  departurePrice    BigInt
+  
+  // Return flight info  
+  returnFlightId    String
+  returnSeatId      String
+  returnPrice       BigInt
+  
+  // Pricing
+  subtotal          BigInt       // Total before discount
+  discountPercent   Int          @default(0)
+  discountAmount    BigInt       @default(0)
+  totalPrice        BigInt       // Final price after discount
+  
+  // Booking info
+  status            StatusTicket @default(PENDING)
+  tokenMidtrans     String?
+  bookingDate       DateTime     @default(now())
+  
+  // Passenger info
+  passengerName     String?
+  passengerPassport String?
+  seatType          TypeSeat     @default(ECONOMY)
 }

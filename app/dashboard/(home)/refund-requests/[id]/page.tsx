@@ -109,6 +109,9 @@ export default async function RefundDetailPage({
                   <ActionButtons
                     requestId={request.id}
                     requestType={request.type}
+                    ticketPrice={Number(request.ticket.price)}
+                    departureDate={request.ticket.flight.departureDate}
+                    currentFlightId={request.ticket.flightId}
                   />
                 </div>
               )}

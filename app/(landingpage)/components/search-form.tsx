@@ -580,6 +580,8 @@ export default function SearchForm({ cities }: SearchFormProps) {
     cities[1]?.code || cities[0]?.code || ""
   );
   const [date, setDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [seatClass, setSeatClass] = useState("");
@@ -590,6 +592,8 @@ export default function SearchForm({ cities }: SearchFormProps) {
     if (departure) params.set("departure", departure);
     if (arrival) params.set("arrival", arrival);
     if (date) params.set("date", date);
+    if (isRoundTrip && returnDate) params.set("returnDate", returnDate);
+    if (isRoundTrip) params.set("roundTrip", "true");
 
     const totalPassengers = adults + children;
     params.set("passengers", totalPassengers.toString());
@@ -656,6 +660,21 @@ export default function SearchForm({ cities }: SearchFormProps) {
           <CustomDatePicker label="" value={date} onChange={setDate} />
         </div>
 
+        {/* Return Date (only show if round trip) */}
+        {isRoundTrip && (
+          <>
+            <div className="w-px h-12 bg-gray-200 shrink-0" />
+            <div className="flex flex-col gap-2 flex-1">
+              <span className="text-sm text-gray-500">Return Date</span>
+              <CustomDatePicker
+                label=""
+                value={returnDate}
+                onChange={setReturnDate}
+              />
+            </div>
+          </>
+        )}
+
         {/* Divider */}
         <div className="w-px h-12 bg-gray-200 shrink-0" />
 
@@ -678,6 +697,43 @@ export default function SearchForm({ cities }: SearchFormProps) {
           <span className="text-sm text-gray-500">Seat Class</span>
           <SeatClassDropdown value={seatClass} onChange={setSeatClass} />
         </div>
+      </div>
+
+      {/* Round Trip Toggle */}
+      <div className="flex items-center gap-4 mb-5">
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={isRoundTrip}
+              onChange={(e) => setIsRoundTrip(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={`w-12 h-6 rounded-full transition-colors ${
+                isRoundTrip ? "bg-flysha-light-purple" : "bg-gray-300"
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  isRoundTrip ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </div>
+          </div>
+          <span
+            className={`font-semibold transition-colors ${
+              isRoundTrip ? "text-flysha-light-purple" : "text-gray-500"
+            }`}
+          >
+            Round Trip
+          </span>
+        </label>
+        {isRoundTrip && (
+          <span className="text-sm text-gray-400">
+            Return flight will be shown after selecting departure
+          </span>
+        )}
       </div>
 
       {/* Divider Line */}

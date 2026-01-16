@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Format currency
 function formatCurrency(amount: number): string {
@@ -47,9 +48,26 @@ interface FlightCardProps {
     }[];
   };
   seatType?: string;
+  isRoundTrip?: boolean;
+  flightType?: "departure" | "return";
+  selectedDepartureFlightId?: string;
+  onSelectFlight?: (
+    flightId: string,
+    flightType: "departure" | "return"
+  ) => void;
 }
 
-export default function FlightCard({ flight, seatType }: FlightCardProps) {
+export default function FlightCard({
+  flight,
+  seatType,
+  isRoundTrip = false,
+  flightType = "departure",
+  selectedDepartureFlightId,
+  onSelectFlight,
+}: FlightCardProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // Determine display price based on seat type
   let displayPrice = flight.price;
   if (seatType === "ECONOMY")
@@ -78,8 +96,34 @@ export default function FlightCard({ flight, seatType }: FlightCardProps) {
     return `/${flight.plane.image}`;
   };
 
+  // Handle booking for round trip
+  const handleBookRoundTrip = () => {
+    if (flightType === "departure") {
+      // Store departure flight selection and scroll to return flights
+      if (onSelectFlight) {
+        onSelectFlight(flight.id, "departure");
+      }
+    } else if (flightType === "return" && selectedDepartureFlightId) {
+      // Navigate to round trip checkout with both flights
+      const params = new URLSearchParams();
+      params.set("departureFlightId", selectedDepartureFlightId);
+      params.set("returnFlightId", flight.id);
+      if (seatType) params.set("seatType", seatType);
+      router.push(`/checkout/round-trip?${params.toString()}`);
+    }
+  };
+
+  const isSelected =
+    selectedDepartureFlightId === flight.id && flightType === "departure";
+
   return (
-    <div className="ticket-card flex justify-between items-center rounded-[20px] p-5 bg-flysha-bg-purple">
+    <div
+      className={`ticket-card flex justify-between items-center rounded-[20px] p-5 bg-flysha-bg-purple transition-all ${
+        isSelected
+          ? "ring-2 ring-flysha-light-purple shadow-[0_0_30px_rgba(184,141,255,0.3)]"
+          : ""
+      }`}
+    >
       {/* Airline Info */}
       <div className="flex gap-4 items-center w-[200px]">
         <div className="flex shrink-0 w-[90px] h-[70px] rounded-[14px] overflow-hidden">
@@ -134,14 +178,36 @@ export default function FlightCard({ flight, seatType }: FlightCardProps) {
       </div>
 
       {/* Book Button */}
-      <Link
-        href={`/choose-seat/${flight.id}${
-          seatType ? `?seatType=${seatType}` : ""
-        }`}
-        className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-5 py-3 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] whitespace-nowrap"
-      >
-        Book Flight
-      </Link>
+      {isRoundTrip ? (
+        <button
+          onClick={handleBookRoundTrip}
+          className={`font-bold rounded-full px-5 py-3 transition-all duration-300 whitespace-nowrap ${
+            flightType === "return" && !selectedDepartureFlightId
+              ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+              : isSelected
+              ? "bg-green-500 text-white hover:shadow-[0_10px_20px_0_#22C55E]"
+              : flightType === "departure"
+              ? "bg-flysha-light-purple text-flysha-black hover:shadow-[0_10px_20px_0_#B88DFF]"
+              : "bg-green-500 text-white hover:shadow-[0_10px_20px_0_#22C55E]"
+          }`}
+          disabled={flightType === "return" && !selectedDepartureFlightId}
+        >
+          {isSelected
+            ? "✓ Selected"
+            : flightType === "departure"
+            ? "Select Departure"
+            : "Complete Booking"}
+        </button>
+      ) : (
+        <Link
+          href={`/choose-seat/${flight.id}${
+            seatType ? `?seatType=${seatType}` : ""
+          }`}
+          className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-5 py-3 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] whitespace-nowrap"
+        >
+          Book Flight
+        </Link>
+      )}
     </div>
   );
 }

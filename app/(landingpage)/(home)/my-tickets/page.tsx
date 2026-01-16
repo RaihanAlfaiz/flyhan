@@ -23,7 +23,7 @@ export default async function MyTicketsPage() {
       seat: true,
       passenger: true,
       refundRequests: {
-        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
       },
     },
     orderBy: { bookingDate: "desc" },
@@ -131,7 +131,6 @@ export default async function MyTicketsPage() {
           {tickets.length > 0 ? (
             tickets.map((ticket) => {
               const flightStatus = (ticket.flight as any).status || "SCHEDULED";
-              const hasPendingRequest = ticket.refundRequests.length > 0;
 
               return (
                 <div
@@ -240,7 +239,7 @@ export default async function MyTicketsPage() {
                       {(flightStatus === "DELAYED" ||
                         flightStatus === "CANCELLED") &&
                         ticket.status === "SUCCESS" &&
-                        !hasPendingRequest && (
+                        ticket.refundRequests.length === 0 && (
                           <Link
                             href={`/my-tickets/refund/${ticket.id}`}
                             className="font-semibold text-white bg-gradient-to-r from-red-500 to-orange-500 rounded-full p-[8px_16px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#ff6b6b] flex items-center justify-center text-xs"
@@ -248,10 +247,40 @@ export default async function MyTicketsPage() {
                             Request Refund/Reschedule
                           </Link>
                         )}
-                      {hasPendingRequest && (
-                        <span className="text-xs text-yellow-400 text-center">
-                          Request pending...
-                        </span>
+                      {/* Refund Status Display */}
+                      {ticket.refundRequests.length > 0 && (
+                        <div className="text-center">
+                          {ticket.refundRequests[0].status === "PENDING" && (
+                            <span className="inline-flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full">
+                              <Clock className="h-3 w-3" />
+                              Menunggu Persetujuan
+                            </span>
+                          )}
+                          {ticket.refundRequests[0].status === "APPROVED" && (
+                            <div className="flex flex-col gap-1">
+                              <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
+                                ✓{" "}
+                                {ticket.refundRequests[0].type === "REFUND"
+                                  ? "Refund"
+                                  : "Reschedule"}{" "}
+                                Disetujui
+                              </span>
+                              {ticket.refundRequests[0].refundAmount && (
+                                <span className="text-xs text-green-300">
+                                  Rp{" "}
+                                  {Number(
+                                    ticket.refundRequests[0].refundAmount
+                                  ).toLocaleString("id-ID")}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {ticket.refundRequests[0].status === "REJECTED" && (
+                            <span className="inline-flex items-center gap-1 text-xs text-red-400 bg-red-500/10 px-3 py-1 rounded-full">
+                              ✕ Permohonan Ditolak
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

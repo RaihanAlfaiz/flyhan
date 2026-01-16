@@ -78,6 +78,13 @@ function Navbar({ user }: { user: User | null }) {
               My Tickets
             </Link>
 
+            <Link
+              href="/my-packages"
+              className="font-bold text-white border-2 border-flysha-light-purple rounded-full px-[20px] py-[10px] transition-all duration-300 hover:bg-flysha-light-purple hover:text-flysha-black text-sm"
+            >
+              My Packages
+            </Link>
+
             <Link href="/profile/settings" title="Profile Settings">
               <div className="w-[48px] h-[48px] rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-transparent hover:border-flysha-light-purple transition-all">
                 {user.avatar ? (
@@ -93,6 +100,7 @@ function Navbar({ user }: { user: User | null }) {
                 )}
               </div>
             </Link>
+            <ButtonLogout />
           </div>
         ) : (
           <Link

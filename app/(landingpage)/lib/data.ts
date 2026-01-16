@@ -86,6 +86,12 @@ export interface FlightSearchParams {
   date?: string;
   seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
   passengerCount?: number;
+  // New filter params
+  sort?: "price_asc" | "price_desc" | "departure_asc" | "departure_desc";
+  time?: "morning" | "afternoon" | "evening" | "night";
+  minPrice?: number;
+  maxPrice?: number;
+  airlines?: string[]; // Array of plane codes
 }
 
 export async function searchFlights(params: FlightSearchParams) {
@@ -96,6 +102,11 @@ export async function searchFlights(params: FlightSearchParams) {
       date,
       seatType,
       passengerCount = 1,
+      sort,
+      time,
+      minPrice,
+      maxPrice,
+      airlines,
     } = params;
 
     // Build where clause dynamically
@@ -134,6 +145,15 @@ export async function searchFlights(params: FlightSearchParams) {
       };
     }
 
+    // Filter by airlines (plane codes)
+    if (airlines && airlines.length > 0) {
+      whereClause.plane = {
+        code: {
+          in: airlines,
+        },
+      };
+    }
+
     // If seat type filter, we need to filter flights that have available seats of that type
     if (seatType) {
       whereClause.seats = {
@@ -142,6 +162,46 @@ export async function searchFlights(params: FlightSearchParams) {
           OR: [{ isBooked: false }, { isBooked: null }],
         },
       };
+    }
+
+    // Price filter (based on seat type)
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const priceField =
+        seatType === "BUSINESS"
+          ? "priceBusiness"
+          : seatType === "FIRST"
+          ? "priceFirst"
+          : "priceEconomy";
+
+      const priceFilter: Record<string, number> = {};
+      if (minPrice !== undefined && minPrice > 0) {
+        priceFilter.gte = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        priceFilter.lte = maxPrice;
+      }
+      if (Object.keys(priceFilter).length > 0) {
+        whereClause[priceField] = priceFilter;
+      }
+    }
+
+    // Determine sort order
+    let orderBy: Record<string, string> = { departureDate: "asc" };
+    if (sort) {
+      switch (sort) {
+        case "price_asc":
+          orderBy = { priceEconomy: "asc" };
+          break;
+        case "price_desc":
+          orderBy = { priceEconomy: "desc" };
+          break;
+        case "departure_asc":
+          orderBy = { departureDate: "asc" };
+          break;
+        case "departure_desc":
+          orderBy = { departureDate: "desc" };
+          break;
+      }
     }
 
     const flights = await prisma.flight.findMany({
@@ -159,15 +219,32 @@ export async function searchFlights(params: FlightSearchParams) {
               },
         },
       },
-      orderBy: {
-        departureDate: "asc",
-      },
+      orderBy,
     });
 
     // Filter flights that have enough available seats for the passenger count
-    const filteredFlights = flights.filter(
+    let filteredFlights = flights.filter(
       (flight) => flight.seats.length >= passengerCount
     );
+
+    // Filter by departure time
+    if (time) {
+      filteredFlights = filteredFlights.filter((flight) => {
+        const hour = new Date(flight.departureDate).getHours();
+        switch (time) {
+          case "morning":
+            return hour >= 6 && hour < 12;
+          case "afternoon":
+            return hour >= 12 && hour < 18;
+          case "evening":
+            return hour >= 18 && hour < 22;
+          case "night":
+            return hour >= 22 || hour < 6;
+          default:
+            return true;
+        }
+      });
+    }
 
     return filteredFlights;
   } catch (error) {
