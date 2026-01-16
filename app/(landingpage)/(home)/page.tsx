@@ -333,7 +333,7 @@ function Footer() {
                 width={20}
                 height={20}
               />
-              buildwithangga
+              Raihan Alfaiz
             </Link>
             <Link
               href="#"
@@ -345,7 +345,7 @@ function Footer() {
                 width={20}
                 height={20}
               />
-              team@bwa.com
+              raihanalfaiz80@gmail.com
             </Link>
           </div>
         </div>

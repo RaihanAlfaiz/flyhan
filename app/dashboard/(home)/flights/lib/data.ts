@@ -51,3 +51,35 @@ export async function getAirplanesForSelect() {
     return [];
   }
 }
+
+// Get unique cities from existing flights
+export async function getExistingCities() {
+  try {
+    const flights = await prisma.flight.findMany({
+      select: {
+        departureCity: true,
+        departureCityCode: true,
+        destinationCity: true,
+        destinationCityCode: true,
+      },
+    });
+
+    // Combine departure and destination cities, remove duplicates
+    const cityMap = new Map<string, string>();
+
+    flights.forEach((flight) => {
+      cityMap.set(flight.departureCity, flight.departureCityCode);
+      cityMap.set(flight.destinationCity, flight.destinationCityCode);
+    });
+
+    const cities = Array.from(cityMap.entries()).map(([name, code]) => ({
+      name,
+      code,
+    }));
+
+    return cities.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+}

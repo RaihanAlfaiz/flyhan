@@ -154,11 +154,14 @@ export default async function AvailableFlightsPage({
 
   // Fetch return flights if round trip
   let returnFlights: typeof flights = [];
-  if (isRoundTrip && returnDateParam) {
+  if (isRoundTrip) {
+    // Use return date if provided, otherwise use departure date as minimum
+    const returnSearchDate = returnDateParam || date;
     returnFlights = await searchFlights({
       departureCode: arrival, // Swap departure and arrival
       arrivalCode: departure,
-      date: returnDateParam,
+      date: returnSearchDate,
+      dateOnOrAfter: true, // Show flights on or after return date
       seatType: seatType,
       passengerCount: passengerCount,
       sort: sort,
@@ -278,18 +281,66 @@ export default async function AvailableFlightsPage({
               date={date}
               returnDate={returnDateParam}
               discountPercent={roundTripDiscount}
+              passengers={passengerCount}
             />
           ) : (
             <div className="ticket-container flex flex-col w-full gap-6">
               {flights.length > 0 ? (
                 <>
-                  {flights.map((flight) => (
-                    <FlightCard
-                      key={flight.id}
-                      flight={flight}
-                      seatType={seatType}
-                    />
-                  ))}
+                  {flights.flatMap((flight) => {
+                    if (seatType) {
+                      return [
+                        <FlightCard
+                          key={flight.id}
+                          flight={flight}
+                          seatType={seatType}
+                        />,
+                      ];
+                    }
+
+                    const cards = [];
+                    const hasEconomy = flight.seats.some(
+                      (s) => s.type === "ECONOMY"
+                    );
+                    const hasBusiness = flight.seats.some(
+                      (s) => s.type === "BUSINESS"
+                    );
+                    const hasFirst = flight.seats.some(
+                      (s) => s.type === "FIRST"
+                    );
+
+                    if (hasEconomy)
+                      cards.push(
+                        <FlightCard
+                          key={`${flight.id}-ECO`}
+                          flight={flight}
+                          seatType="ECONOMY"
+                        />
+                      );
+                    if (hasBusiness)
+                      cards.push(
+                        <FlightCard
+                          key={`${flight.id}-BUS`}
+                          flight={flight}
+                          seatType="BUSINESS"
+                        />
+                      );
+                    if (hasFirst)
+                      cards.push(
+                        <FlightCard
+                          key={`${flight.id}-FIRST`}
+                          flight={flight}
+                          seatType="FIRST"
+                        />
+                      );
+
+                    if (cards.length === 0) {
+                      cards.push(
+                        <FlightCard key={flight.id} flight={flight} />
+                      );
+                    }
+                    return cards;
+                  })}
                   <p className="text-center text-sm text-[#A0A0AC] h-fit">
                     You&apos;ve reached the end of results.
                   </p>

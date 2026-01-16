@@ -1,27 +1,30 @@
-import { redirect } from "next/navigation";
-import { getUser } from "@/lib/auth";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { calculateRoundTripPrice } from "./lib/actions";
-import RoundTripCheckoutForm from "./components/checkout-form";
+import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import RoundTripCheckoutContent from "./components/checkout-content";
+import { holdSeats } from "../lib/seat-hold"; // Reusing existing seat hold logic
+import { getRoundTripDiscount } from "./lib/actions";
+import { getFlightAddons } from "@/app/dashboard/(home)/flight-addons/lib/data";
 
-interface PageProps {
+interface CheckoutPageProps {
   searchParams: Promise<{
     departureFlightId?: string;
     returnFlightId?: string;
-    departureSeatId?: string;
-    returnSeatId?: string;
-    seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
+    departureSeatIds?: string;
+    returnSeatIds?: string;
+    seatType?: string;
   }>;
 }
 
 export default async function RoundTripCheckoutPage({
   searchParams,
-}: PageProps) {
-  const { session, user } = await getUser();
+}: CheckoutPageProps) {
+  const { user } = await getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/signin");
   }
 
@@ -29,318 +32,145 @@ export default async function RoundTripCheckoutPage({
   const {
     departureFlightId,
     returnFlightId,
-    departureSeatId,
-    returnSeatId,
+    departureSeatIds,
+    returnSeatIds,
     seatType = "ECONOMY",
   } = params;
 
-  // Validate required params
-  if (!departureFlightId || !returnFlightId) {
-    redirect("/available-flights?error=Missing+flight+selection");
+  if (
+    !departureFlightId ||
+    !returnFlightId ||
+    !departureSeatIds ||
+    !returnSeatIds
+  ) {
+    redirect("/available-flights?error=Missing+flight+or+seat+selection");
   }
 
-  // Get pricing calculation
-  const pricing = await calculateRoundTripPrice(
-    departureFlightId,
-    returnFlightId,
-    seatType
-  );
-
-  if ("error" in pricing) {
-    redirect(
-      `/available-flights?error=${encodeURIComponent(pricing.error || "Error")}`
-    );
-  }
-
-  const {
-    departureFlight,
-    returnFlight,
-    departurePrice,
-    returnPrice,
-    subtotal,
-    discountPercent,
-    discountAmount,
-    totalPrice,
-  } = pricing;
-
-  // Get available seats for each flight
-  const [departureSeats, returnSeats] = await Promise.all([
-    prisma.flightSeat.findMany({
-      where: {
-        flightId: departureFlightId,
-        type: seatType,
-        isBooked: false,
-      },
-      orderBy: { seatNumber: "asc" },
+  // Fetch flights
+  const [departureFlight, returnFlight] = await Promise.all([
+    prisma.flight.findUnique({
+      where: { id: departureFlightId },
+      include: { plane: true, seats: true },
     }),
-    prisma.flightSeat.findMany({
-      where: {
-        flightId: returnFlightId,
-        type: seatType,
-        isBooked: false,
-      },
-      orderBy: { seatNumber: "asc" },
+    prisma.flight.findUnique({
+      where: { id: returnFlightId },
+      include: { plane: true, seats: true },
     }),
   ]);
 
-  // Get preselected seats if provided
-  const preselectedDepartureSeat = departureSeatId
-    ? departureSeats.find((s) => s.id === departureSeatId)
-    : null;
-  const preselectedReturnSeat = returnSeatId
-    ? returnSeats.find((s) => s.id === returnSeatId)
-    : null;
+  if (!departureFlight || !returnFlight) {
+    redirect("/available-flights?error=Flight+not+found");
+  }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  // Parse seat IDs and find seats
+  const departureSeatIdArray = departureSeatIds.split(",");
+  const returnSeatIdArray = returnSeatIds.split(",");
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("id-ID", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
+  const departureSeats = departureFlight.seats.filter((s) =>
+    departureSeatIdArray.includes(s.id)
+  );
+  const returnSeats = returnFlight.seats.filter((s) =>
+    returnSeatIdArray.includes(s.id)
+  );
 
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  if (departureSeats.length === 0 || returnSeats.length === 0) {
+    redirect(
+      `/choose-seat/round-trip?departureFlightId=${departureFlightId}&returnFlightId=${returnFlightId}&seatType=${seatType}`
+    );
+  }
+
+  // Hold seats (Departure)
+  const depHoldResult = await holdSeats(
+    departureFlightId,
+    departureSeatIdArray
+  );
+  if (!depHoldResult.success) {
+    redirect(
+      `/choose-seat/round-trip?error=${encodeURIComponent(
+        "Departure: " + depHoldResult.message
+      )}`
+    );
+  }
+
+  // Hold seats (Return)
+  const retHoldResult = await holdSeats(returnFlightId, returnSeatIdArray);
+  if (!retHoldResult.success) {
+    // Note: Should probably release departure seats here if return fails, but for MVP keep it simple
+    redirect(
+      `/choose-seat/round-trip?error=${encodeURIComponent(
+        "Return: " + retHoldResult.message
+      )}`
+    );
+  }
+
+  // Use the earliest hold expiry
+  const depExpiry = depHoldResult.holdUntil?.getTime() || 0;
+  const retExpiry = retHoldResult.holdUntil?.getTime() || 0;
+  const holdUntil = new Date(Math.min(depExpiry, retExpiry)).toISOString();
+
+  // Get Discount
+  const discountPercent = await getRoundTripDiscount();
+
+  // Get Addons
+  const addons = await getFlightAddons();
 
   return (
     <div className="text-white font-sans bg-flysha-black min-h-screen">
-      {/* Header */}
-      <section className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[200px] relative">
-        <div className="bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[200px]">
-          <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]">
+      {/* Header Section */}
+      <section
+        id="Header"
+        className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[290px] relative"
+      >
+        <div className="Header-content bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[290px]">
+          <nav
+            id="Navbar"
+            className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]"
+          >
             <Link href="/" className="flex items-center shrink-0">
               <Image
                 src="/assets/images/logos/logo.svg"
-                alt="Flyhan Logo"
+                alt="logo"
                 width={120}
                 height={40}
-                priority
               />
             </Link>
-            <div className="flex items-center gap-4">
-              <span className="bg-flysha-light-purple text-flysha-black px-4 py-1.5 rounded-full text-sm font-bold">
-                🔄 Round Trip Checkout
-              </span>
-            </div>
+            <ul className="nav-menus flex gap-[30px] items-center w-fit">
+              <div className="flex items-center gap-3">
+                <span className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-sm font-bold">
+                  Round Trip Checkout
+                </span>
+              </div>
+              <div className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center">
+                {user.name.substring(0, 2).toUpperCase()}
+              </div>
+            </ul>
           </nav>
-          <div className="container max-w-[1130px] mx-auto pt-8">
-            <h1 className="font-bold text-2xl">
-              Complete Your Round Trip Booking
-            </h1>
-            <p className="text-flysha-off-purple">
-              {departureFlight.departureCity} ⇄{" "}
-              {departureFlight.destinationCity}
+          <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px]">
+            <h1 className="font-bold text-[32px] leading-[48px]">Checkout</h1>
+            <p className="font-medium text-lg leading-[27px]">
+              Confirm your round trip booking
             </p>
           </div>
-          <div className="w-full h-[15px] bg-gradient-to-t from-[#080318] to-[rgba(8,3,24,0)] absolute bottom-0" />
+          <div className="w-full h-[15px] bg-gradient-to-t from-[#080318] to-[rgba(8,3,24,0)] absolute bottom-0"></div>
         </div>
       </section>
 
-      {/* Content */}
-      <section className="container max-w-[1130px] mx-auto py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Flight Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Departure Flight Card */}
-            <div className="bg-flysha-bg-purple rounded-[20px] p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="bg-flysha-light-purple/20 text-flysha-light-purple px-3 py-1 rounded-full text-sm font-semibold">
-                  ✈️ Departure
-                </span>
-                <span className="text-flysha-off-purple text-sm">
-                  {formatDate(departureFlight.departureDate)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={departureFlight.plane.image}
-                  alt={departureFlight.plane.name}
-                  className="w-20 h-16 object-cover rounded-xl"
-                />
-                <div>
-                  <p className="font-bold text-lg">
-                    {departureFlight.plane.name}
-                  </p>
-                  <p className="text-flysha-off-purple text-sm">
-                    {departureFlight.plane.code}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {formatTime(departureFlight.departureDate)}
-                  </p>
-                  <p className="text-flysha-off-purple">
-                    {departureFlight.departureCityCode}
-                  </p>
-                  <p className="text-sm text-flysha-off-purple">
-                    {departureFlight.departureCity}
-                  </p>
-                </div>
-                <div className="flex-1 flex items-center justify-center px-8">
-                  <div className="w-full h-0.5 bg-gradient-to-r from-flysha-light-purple to-green-400 relative">
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 text-2xl">
-                      ✈️
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {formatTime(departureFlight.arrivalDate)}
-                  </p>
-                  <p className="text-flysha-off-purple">
-                    {departureFlight.destinationCityCode}
-                  </p>
-                  <p className="text-sm text-flysha-off-purple">
-                    {departureFlight.destinationCity}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                <span className="text-flysha-off-purple">{seatType} Class</span>
-                <span className="font-bold text-lg text-flysha-light-purple">
-                  {formatCurrency(departurePrice)}
-                </span>
-              </div>
-            </div>
-
-            {/* Return Flight Card */}
-            <div className="bg-flysha-bg-purple rounded-[20px] p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold">
-                  🔄 Return
-                </span>
-                <span className="text-flysha-off-purple text-sm">
-                  {formatDate(returnFlight.departureDate)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={returnFlight.plane.image}
-                  alt={returnFlight.plane.name}
-                  className="w-20 h-16 object-cover rounded-xl"
-                />
-                <div>
-                  <p className="font-bold text-lg">{returnFlight.plane.name}</p>
-                  <p className="text-flysha-off-purple text-sm">
-                    {returnFlight.plane.code}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {formatTime(returnFlight.departureDate)}
-                  </p>
-                  <p className="text-flysha-off-purple">
-                    {returnFlight.departureCityCode}
-                  </p>
-                  <p className="text-sm text-flysha-off-purple">
-                    {returnFlight.departureCity}
-                  </p>
-                </div>
-                <div className="flex-1 flex items-center justify-center px-8">
-                  <div className="w-full h-0.5 bg-gradient-to-r from-green-400 to-flysha-light-purple relative">
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 text-2xl">
-                      ✈️
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {formatTime(returnFlight.arrivalDate)}
-                  </p>
-                  <p className="text-flysha-off-purple">
-                    {returnFlight.destinationCityCode}
-                  </p>
-                  <p className="text-sm text-flysha-off-purple">
-                    {returnFlight.destinationCity}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                <span className="text-flysha-off-purple">{seatType} Class</span>
-                <span className="font-bold text-lg text-green-400">
-                  {formatCurrency(returnPrice)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Booking Summary & Form */}
-          <div className="space-y-6">
-            {/* Price Summary */}
-            <div className="bg-flysha-bg-purple rounded-[20px] p-6 sticky top-6">
-              <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-flysha-off-purple">
-                    Departure Flight
-                  </span>
-                  <span>{formatCurrency(departurePrice)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-flysha-off-purple">Return Flight</span>
-                  <span>{formatCurrency(returnPrice)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-flysha-off-purple">Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-green-400">
-                  <span>🎉 Round Trip Discount ({discountPercent}%)</span>
-                  <span>-{formatCurrency(discountAmount)}</span>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/10">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">Total</span>
-                  <span className="text-2xl font-bold text-flysha-light-purple">
-                    {formatCurrency(totalPrice)}
-                  </span>
-                </div>
-                <p className="text-xs text-green-400 mt-1">
-                  You save {formatCurrency(discountAmount)} with round trip!
-                </p>
-              </div>
-            </div>
-
-            {/* Checkout Form */}
-            <RoundTripCheckoutForm
-              departureFlightId={departureFlightId}
-              returnFlightId={returnFlightId}
-              departureSeats={departureSeats}
-              returnSeats={returnSeats}
-              preselectedDepartureSeatId={preselectedDepartureSeat?.id}
-              preselectedReturnSeatId={preselectedReturnSeat?.id}
-              seatType={seatType}
-              userName={user?.name || ""}
-              userPassport={user?.passport || ""}
-            />
-          </div>
-        </div>
+      {/* Content Section */}
+      <section
+        id="Content"
+        className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-20"
+      >
+        <RoundTripCheckoutContent
+          departureFlight={departureFlight}
+          returnFlight={returnFlight}
+          departureSeats={departureSeats}
+          returnSeats={returnSeats}
+          user={user}
+          holdUntil={holdUntil}
+          seatType={seatType}
+          discountPercent={discountPercent}
+          addons={addons}
+        />
       </section>
     </div>
   );

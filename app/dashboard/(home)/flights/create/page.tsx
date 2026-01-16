@@ -1,4 +1,4 @@
-import { getAirplanesForSelect } from "../lib/data";
+import { getAirplanesForSelect, getExistingCities } from "../lib/data";
 import FormFlight from "../components/form-flight";
 import Link from "next/link";
 import PageHeader from "../../ui/page-header/PageHeader";
@@ -7,7 +7,10 @@ import Button from "../../ui/button/Button";
 import { ArrowLeft } from "lucide-react";
 
 export default async function CreateFlightPage() {
-  const airplanes = await getAirplanesForSelect();
+  const [airplanes, existingCities] = await Promise.all([
+    getAirplanesForSelect(),
+    getExistingCities(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -35,7 +38,7 @@ export default async function CreateFlightPage() {
           <CardTitle>Flight Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <FormFlight airplanes={airplanes} />
+          <FormFlight airplanes={airplanes} existingCities={existingCities} />
         </CardContent>
       </Card>
     </div>

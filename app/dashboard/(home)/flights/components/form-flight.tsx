@@ -9,6 +9,7 @@ import Input from "../../ui/input/Input";
 import Label from "../../ui/label/Label";
 import Button from "../../ui/button/Button";
 import SearchableSelect from "../../ui/searchable-select/SearchableSelect";
+import ComboboxInput from "../../ui/combobox-input/ComboboxInput";
 
 interface Airplane {
   id: string;
@@ -16,8 +17,14 @@ interface Airplane {
   code: string;
 }
 
+interface City {
+  name: string;
+  code: string;
+}
+
 interface FormFlightProps {
   airplanes: Airplane[];
+  existingCities?: City[];
 }
 
 const initialFormState: ActionResult = {
@@ -37,7 +44,10 @@ const SubmitButton = () => {
   );
 };
 
-const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
+const FormFlight: FC<FormFlightProps> = ({
+  airplanes,
+  existingCities = [],
+}) => {
   const [state, formAction] = useActionState(saveFlight, initialFormState);
   const [seatConfig, setSeatConfig] = React.useState<string>("[]");
 
@@ -45,6 +55,12 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
     value: plane.id,
     label: plane.name,
     description: plane.code,
+  }));
+
+  const cityOptions = existingCities.map((city) => ({
+    value: city.name,
+    label: city.name,
+    code: city.code,
   }));
 
   return (
@@ -130,29 +146,22 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
         <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
           Departure
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="departureCity" required>
-              City
+              City & Code
             </Label>
-            <Input
-              id="departureCity"
+            <ComboboxInput
               name="departureCity"
-              placeholder="Jakarta"
+              codeName="departureCityCode"
+              options={cityOptions}
+              placeholder="Search or type city name..."
+              codePlaceholder="JKT"
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="departureCityCode" required>
-              City Code
-            </Label>
-            <Input
-              id="departureCityCode"
-              name="departureCityCode"
-              placeholder="JKT"
-              required
-              className="uppercase"
-            />
+            <p className="text-xs text-gray-400 mt-1">
+              Select existing city or type new one
+            </p>
           </div>
           <div>
             <Label htmlFor="departureDate" required>
@@ -173,29 +182,22 @@ const FormFlight: FC<FormFlightProps> = ({ airplanes }) => {
         <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">
           Arrival
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="destinationCity" required>
-              City
+              City & Code
             </Label>
-            <Input
-              id="destinationCity"
+            <ComboboxInput
               name="destinationCity"
-              placeholder="Bali"
+              codeName="destinationCityCode"
+              options={cityOptions}
+              placeholder="Search or type city name..."
+              codePlaceholder="DPS"
               required
             />
-          </div>
-          <div>
-            <Label htmlFor="destinationCityCode" required>
-              City Code
-            </Label>
-            <Input
-              id="destinationCityCode"
-              name="destinationCityCode"
-              placeholder="DPS"
-              required
-              className="uppercase"
-            />
+            <p className="text-xs text-gray-400 mt-1">
+              Select existing city or type new one
+            </p>
           </div>
           <div>
             <Label htmlFor="arrivalDate" required>

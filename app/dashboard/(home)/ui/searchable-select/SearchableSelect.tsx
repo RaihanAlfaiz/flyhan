@@ -137,13 +137,14 @@ export default function SearchableSelect({
       <input type="hidden" name={name} value={selectedValue} />
 
       {/* Trigger Button */}
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        disabled={disabled}
+        aria-disabled={disabled}
         className={`
-          w-full h-11 px-4 rounded-lg border text-left flex items-center justify-between gap-2 transition-all
+          w-full h-11 px-4 rounded-lg border text-left flex items-center justify-between gap-2 transition-all cursor-pointer
           ${
             disabled
               ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400 dark:bg-gray-800 dark:border-gray-700"
@@ -164,13 +165,20 @@ export default function SearchableSelect({
         </span>
         <div className="flex items-center gap-1">
           {selectedValue && !disabled && (
-            <button
-              type="button"
+            <span
+              role="button"
+              tabIndex={0}
               onClick={handleClear}
-              className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-800"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleClear(e as unknown as React.MouseEvent);
+                }
+              }}
+              className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-800 cursor-pointer"
             >
               <X className="w-3.5 h-3.5 text-gray-400" />
-            </button>
+            </span>
           )}
           <ChevronDown
             className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
@@ -178,7 +186,7 @@ export default function SearchableSelect({
             }`}
           />
         </div>
-      </button>
+      </div>
 
       {/* Dropdown */}
       {isOpen && (

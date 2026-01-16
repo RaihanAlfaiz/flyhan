@@ -37,6 +37,7 @@ interface RoundTripFlightListProps {
   date?: string;
   returnDate?: string;
   discountPercent: number;
+  passengers?: number;
 }
 
 export default function RoundTripFlightList({
@@ -48,18 +49,26 @@ export default function RoundTripFlightList({
   date,
   returnDate,
   discountPercent,
+  passengers = 1,
 }: RoundTripFlightListProps) {
   const [selectedDepartureFlightId, setSelectedDepartureFlightId] =
     useState<string>("");
+  const [selectedClass, setSelectedClass] = useState<string | undefined>(
+    seatType
+  );
+
   const returnSectionRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const handleSelectFlight = (
     flightId: string,
-    flightType: "departure" | "return"
+    flightType: "departure" | "return",
+    type?: string
   ) => {
     if (flightType === "departure") {
       setSelectedDepartureFlightId(flightId);
+      if (type) setSelectedClass(type);
+
       // Smooth scroll to return flights after selection
       setTimeout(() => {
         returnSectionRef.current?.scrollIntoView({
@@ -74,10 +83,11 @@ export default function RoundTripFlightList({
   const selectedDepartureFlight = departureFlights.find(
     (f) => f.id === selectedDepartureFlightId
   );
+  // Calculate price based on selected class if available
   const departurePrice = selectedDepartureFlight
-    ? (seatType === "BUSINESS"
+    ? (selectedClass === "BUSINESS"
         ? selectedDepartureFlight.priceBusiness
-        : seatType === "FIRST"
+        : selectedClass === "FIRST"
         ? selectedDepartureFlight.priceFirst
         : selectedDepartureFlight.priceEconomy) || selectedDepartureFlight.price
     : 0;
@@ -103,7 +113,9 @@ export default function RoundTripFlightList({
             >
               {selectedDepartureFlightId ? "✓" : "1"}
             </div>
-            <span className="font-semibold">Select Departure</span>
+            <span className="font-semibold">
+              Select Departure {selectedClass ? `(${selectedClass})` : ""}
+            </span>
           </div>
           <div className="w-12 h-0.5 bg-white/20" />
           <div
@@ -157,17 +169,82 @@ export default function RoundTripFlightList({
       </div>
 
       {departureFlights.length > 0 ? (
-        departureFlights.map((flight) => (
-          <FlightCard
-            key={flight.id}
-            flight={flight}
-            seatType={seatType}
-            isRoundTrip={true}
-            flightType="departure"
-            selectedDepartureFlightId={selectedDepartureFlightId}
-            onSelectFlight={handleSelectFlight}
-          />
-        ))
+        departureFlights.flatMap((flight) => {
+          if (seatType) {
+            return [
+              <FlightCard
+                key={flight.id}
+                flight={flight}
+                seatType={seatType}
+                isRoundTrip={true}
+                flightType="departure"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />,
+            ];
+          }
+          // Logic to show multiple cards per flight if 'All' seat type
+          const cards = [];
+          const hasEconomy = flight.seats.some((s) => s.type === "ECONOMY");
+          const hasBusiness = flight.seats.some((s) => s.type === "BUSINESS");
+          const hasFirst = flight.seats.some((s) => s.type === "FIRST");
+
+          if (hasEconomy)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-ECO`}
+                flight={flight}
+                seatType="ECONOMY"
+                isRoundTrip={true}
+                flightType="departure"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+          if (hasBusiness)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-BUS`}
+                flight={flight}
+                seatType="BUSINESS"
+                isRoundTrip={true}
+                flightType="departure"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+          if (hasFirst)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-FIRST`}
+                flight={flight}
+                seatType="FIRST"
+                isRoundTrip={true}
+                flightType="departure"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+
+          if (cards.length === 0)
+            cards.push(
+              <FlightCard
+                key={flight.id}
+                flight={flight}
+                isRoundTrip={true}
+                flightType="departure"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+
+          return cards;
+        })
       ) : (
         <div className="text-center py-8 text-flysha-off-purple">
           No departure flights found
@@ -191,10 +268,10 @@ export default function RoundTripFlightList({
         <span className="text-flysha-off-purple text-sm">
           {arrivalCity} → {departureCity}
         </span>
-        {returnDate && (
+        {(returnDate || date) && (
           <span className="text-flysha-off-purple text-sm">
-            •{" "}
-            {new Date(returnDate).toLocaleDateString("id-ID", {
+            • On or after{" "}
+            {new Date(returnDate || date || "").toLocaleDateString("id-ID", {
               day: "numeric",
               month: "short",
               year: "numeric",
@@ -210,17 +287,95 @@ export default function RoundTripFlightList({
       </div>
 
       {returnFlights.length > 0 ? (
-        returnFlights.map((flight) => (
-          <FlightCard
-            key={flight.id}
-            flight={flight}
-            seatType={seatType}
-            isRoundTrip={true}
-            flightType="return"
-            selectedDepartureFlightId={selectedDepartureFlightId}
-            onSelectFlight={handleSelectFlight}
-          />
-        ))
+        returnFlights.flatMap((flight) => {
+          // IF a class is already selected (from departure), only show return options for that class
+          // To prevent mixed class booking issues in current checkout flow
+          if (selectedClass) {
+            // Check if this flight has the selected class
+            const hasClass = flight.seats.some((s) => s.type === selectedClass);
+            if (hasClass) {
+              return [
+                <FlightCard
+                  key={`${flight.id}-${selectedClass}`}
+                  flight={flight}
+                  seatType={selectedClass}
+                  isRoundTrip={true}
+                  flightType="return"
+                  selectedDepartureFlightId={selectedDepartureFlightId}
+                  passengers={passengers}
+                  onSelectFlight={handleSelectFlight}
+                />,
+              ];
+            }
+            return []; // Don't show if class not available
+          }
+
+          // If no class selected (should not happen if departure selected, but safe fallback)
+          // Or if seats not filtered (only when seatType is "All" and departure not yet selected - but return list is hidden anyway if no dep selected?) No, return list is shown but buttons disabled.
+          // If departure NOT selected, we can show All classes for return too?
+          // Actually, buttons are disabled if departure not selected.
+          // So we can show all classes.
+
+          const cards = [];
+          const hasEconomy = flight.seats.some((s) => s.type === "ECONOMY");
+          const hasBusiness = flight.seats.some((s) => s.type === "BUSINESS");
+          const hasFirst = flight.seats.some((s) => s.type === "FIRST");
+
+          if (hasEconomy)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-ECO`}
+                flight={flight}
+                seatType="ECONOMY"
+                isRoundTrip={true}
+                flightType="return"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+          if (hasBusiness)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-BUS`}
+                flight={flight}
+                seatType="BUSINESS"
+                isRoundTrip={true}
+                flightType="return"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+          if (hasFirst)
+            cards.push(
+              <FlightCard
+                key={`${flight.id}-FIRST`}
+                flight={flight}
+                seatType="FIRST"
+                isRoundTrip={true}
+                flightType="return"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+
+          if (cards.length === 0)
+            cards.push(
+              <FlightCard
+                key={flight.id}
+                flight={flight}
+                isRoundTrip={true}
+                flightType="return"
+                selectedDepartureFlightId={selectedDepartureFlightId}
+                passengers={passengers}
+                onSelectFlight={handleSelectFlight}
+              />
+            );
+
+          return cards;
+        })
       ) : (
         <div className="text-center py-8 text-flysha-off-purple">
           No return flights found for the selected date

@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { getSetting } from "@/app/dashboard/(home)/settings/lib/actions";
+import { getBookingConfirmationTemplate } from "@/lib/email-templates/booking-confirmation";
+import { getRoundTripBookingConfirmationTemplate } from "@/lib/email-templates/booking-confirmation-round-trip";
 import { sendEmail } from "@/lib/mail";
 
 // Get round trip discount percentage
@@ -69,11 +71,23 @@ export async function calculateRoundTripPrice(
 export async function checkoutRoundTrip(data: {
   departureFlightId: string;
   returnFlightId: string;
-  departureSeatId: string;
-  returnSeatId: string;
+  departureSeatIds: string; // comma separated
+  returnSeatIds: string; // comma separated
   seatType: "ECONOMY" | "BUSINESS" | "FIRST";
-  passengerName?: string;
-  passengerPassport?: string;
+  totalPrice: number;
+  passengers: Array<{
+    departureSeatId: string;
+    returnSeatId: string;
+    name: string;
+    passport?: string;
+    title?: string;
+    nationality?: string;
+  }>;
+  addons?: Array<{
+    seatId: string;
+    addonId: string;
+    requestDetail?: string;
+  }>;
 }) {
   const { session, user } = await getUser();
 
@@ -84,14 +98,15 @@ export async function checkoutRoundTrip(data: {
   const {
     departureFlightId,
     returnFlightId,
-    departureSeatId,
-    returnSeatId,
+    departureSeatIds,
+    returnSeatIds,
     seatType,
-    passengerName,
-    passengerPassport,
+    totalPrice,
+    passengers,
+    addons,
   } = data;
 
-  // Get pricing
+  // Get pricing details for accurate recording
   const pricing = await calculateRoundTripPrice(
     departureFlightId,
     returnFlightId,
@@ -99,7 +114,7 @@ export async function checkoutRoundTrip(data: {
   );
 
   if ("error" in pricing) {
-    return { error: pricing.error };
+    return { error: pricing.error || "Pricing error" };
   }
 
   // Validate flights
@@ -112,20 +127,21 @@ export async function checkoutRoundTrip(data: {
   }
 
   // Check seats availability
-  const [departureSeat, returnSeat] = await Promise.all([
-    prisma.flightSeat.findUnique({ where: { id: departureSeatId } }),
-    prisma.flightSeat.findUnique({ where: { id: returnSeatId } }),
-  ]);
+  const depSeatIdList = departureSeatIds.split(",");
+  const retSeatIdList = returnSeatIds.split(",");
 
-  if (!departureSeat || departureSeat.isBooked) {
-    return { error: "Departure seat is not available" };
-  }
-  if (!returnSeat || returnSeat.isBooked) {
-    return { error: "Return seat is not available" };
+  const allSeatIds = [...depSeatIdList, ...retSeatIdList];
+
+  const seats = await prisma.flightSeat.findMany({
+    where: { id: { in: allSeatIds } },
+  });
+
+  const bookedSeat = seats.find((s) => s.isBooked);
+  if (bookedSeat) {
+    return { error: `Seat ${bookedSeat.seatNumber} is already booked` };
   }
 
   try {
-    // Generate booking code
     const bookingCode = `RT-${Date.now()
       .toString(36)
       .toUpperCase()}-${Math.random()
@@ -133,147 +149,194 @@ export async function checkoutRoundTrip(data: {
       .substring(2, 6)
       .toUpperCase()}`;
 
-    // Create round trip booking
-    await prisma.$transaction(async (tx) => {
-      // Create round trip booking record
-      await tx.roundTripBooking.create({
-        data: {
-          code: bookingCode,
-          customerId: user.id,
-          departureFlightId,
-          departureSeatId,
-          departurePrice: BigInt(pricing.departurePrice),
-          returnFlightId,
-          returnSeatId,
-          returnPrice: BigInt(pricing.returnPrice),
-          subtotal: BigInt(pricing.subtotal),
-          discountPercent: pricing.discountPercent,
-          discountAmount: BigInt(pricing.discountAmount),
-          totalPrice: BigInt(pricing.totalPrice),
-          status: "SUCCESS",
-          tokenMidtrans: `MID-RT-${Date.now()}`,
-          passengerName: passengerName || user.name,
-          passengerPassport: passengerPassport || null,
-          seatType: seatType,
-        },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        for (const p of passengers) {
+          const depSeat = seats.find((s) => s.id === p.departureSeatId);
+          const retSeat = seats.find((s) => s.id === p.returnSeatId);
 
-      // Mark departure seat as booked
-      await tx.flightSeat.update({
-        where: { id: departureSeatId },
-        data: {
-          isBooked: true,
-          holdUntil: null,
-          heldByUserId: null,
-        },
-      });
+          if (!depSeat || !retSeat) continue;
 
-      // Mark return seat as booked
-      await tx.flightSeat.update({
-        where: { id: returnSeatId },
-        data: {
-          isBooked: true,
-          holdUntil: null,
-          heldByUserId: null,
-        },
-      });
-    });
+          const passengerName = `${p.title ? p.title + ". " : ""}${p.name}`;
 
-    // Send confirmation email
+          // Departure Ticket
+          const passengerRecordDep = await tx.passenger.create({
+            data: {
+              name: passengerName,
+              passport: p.passport,
+            },
+          });
+
+          const depTicket = await tx.ticket.create({
+            data: {
+              code: `FLYHAN-${pricing.departureFlight.plane.code}-${
+                depSeat.seatNumber
+              }-${Date.now().toString(36).toUpperCase()}`,
+              flightId: departureFlightId,
+              customerId: user.id,
+              seatId: p.departureSeatId,
+              bookingDate: new Date(),
+              price: BigInt(Math.floor(totalPrice / 2 / passengers.length)),
+              status: "SUCCESS",
+              tokenMidtrans: `RT-BUNDLE-${bookingCode}`,
+              passengerId: passengerRecordDep.id,
+            },
+          });
+
+          // Save Departure Addons
+          const depAddons =
+            addons?.filter((a) => a.seatId === p.departureSeatId) || [];
+          for (const addon of depAddons) {
+            await tx.ticketAddon.create({
+              data: {
+                ticketId: depTicket.id,
+                flightAddonId: addon.addonId,
+                requestDetail: addon.requestDetail || null,
+              },
+            });
+          }
+
+          await tx.flightSeat.update({
+            where: { id: p.departureSeatId },
+            data: { isBooked: true, holdUntil: null, heldByUserId: null },
+          });
+
+          // Return Ticket
+          const passengerRecordRet = await tx.passenger.create({
+            data: {
+              name: passengerName,
+              passport: p.passport,
+            },
+          });
+
+          const retTicket = await tx.ticket.create({
+            data: {
+              code: `FLYHAN-${pricing.returnFlight.plane.code}-${
+                retSeat.seatNumber
+              }-${Date.now().toString(36).toUpperCase()}-R`,
+              flightId: returnFlightId,
+              customerId: user.id,
+              seatId: p.returnSeatId,
+              bookingDate: new Date(),
+              price: BigInt(Math.floor(totalPrice / 2 / passengers.length)),
+              status: "SUCCESS",
+              tokenMidtrans: `RT-BUNDLE-${bookingCode}`,
+              passengerId: passengerRecordRet.id,
+            },
+          });
+
+          // Save Return Addons
+          const retAddons =
+            addons?.filter((a) => a.seatId === p.returnSeatId) || [];
+          for (const addon of retAddons) {
+            await tx.ticketAddon.create({
+              data: {
+                ticketId: retTicket.id,
+                flightAddonId: addon.addonId,
+                requestDetail: addon.requestDetail || null,
+              },
+            });
+          }
+
+          await tx.flightSeat.update({
+            where: { id: p.returnSeatId },
+            data: { isBooked: true, holdUntil: null, heldByUserId: null },
+          });
+        }
+
+        await tx.roundTripBooking.create({
+          data: {
+            code: bookingCode,
+            customerId: user.id,
+            departureFlightId,
+            departureSeatId: passengers[0].departureSeatId,
+            departurePrice: BigInt(pricing.departurePrice),
+            returnFlightId,
+            returnSeatId: passengers[0].returnSeatId,
+            returnPrice: BigInt(pricing.returnPrice),
+            subtotal: BigInt(pricing.subtotal),
+            discountPercent: pricing.discountPercent,
+            discountAmount: BigInt(pricing.discountAmount),
+            totalPrice: BigInt(totalPrice),
+            status: "SUCCESS",
+            tokenMidtrans: `MID-RT-${Date.now()}`,
+            passengerName: `${passengers[0].title || ""} ${passengers[0].name}`,
+            passengerPassport: passengers[0].passport || null,
+            seatType: seatType,
+          },
+        });
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      }
+    );
+
     try {
+      // Prepare email data
+      const flightDep = pricing.departureFlight;
+      const flightRet = pricing.returnFlight;
+
+      const depSeatsDisplay = depSeatIdList
+        .map((id) => seats.find((s) => s.id === id)?.seatNumber || "")
+        .join(", ");
+      const retSeatsDisplay = retSeatIdList
+        .map((id) => seats.find((s) => s.id === id)?.seatNumber || "")
+        .join(", ");
+
+      const emailHtml = getRoundTripBookingConfirmationTemplate({
+        userName: user.name,
+        bookingCode: bookingCode,
+        departureFlightCode: `${flightDep.plane.code} (${flightDep.plane.name})`,
+        departureRoute: `${flightDep.departureCity} (${flightDep.departureCityCode}) → ${flightDep.destinationCity} (${flightDep.destinationCityCode})`,
+        departureDate: new Date(flightDep.departureDate).toLocaleDateString(
+          "id-ID",
+          {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        ),
+        departureSeats: depSeatsDisplay,
+
+        returnFlightCode: `${flightRet.plane.code} (${flightRet.plane.name})`,
+        returnRoute: `${flightRet.departureCity} (${flightRet.departureCityCode}) → ${flightRet.destinationCity} (${flightRet.destinationCityCode})`,
+        returnDate: new Date(flightRet.departureDate).toLocaleDateString(
+          "id-ID",
+          {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        ),
+        returnSeats: retSeatsDisplay,
+
+        price: new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(totalPrice),
+      });
+
       await sendEmail({
         to: user.email,
         subject: `[FlyHan] Round Trip Booking Confirmed! ✈️🔄 - ${bookingCode}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #4C1D95, #7C3AED); padding: 30px; text-align: center;">
-              <h1 style="color: white; margin: 0;">Round Trip Booking Confirmed! 🎉</h1>
-            </div>
-            <div style="padding: 30px; background: #f9fafb;">
-              <p>Halo <strong>${user.name}</strong>,</p>
-              <p>Terima kasih! Pemesanan round trip Anda telah dikonfirmasi.</p>
-              
-              <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #4C1D95;">✈️ Penerbangan Pergi</h3>
-                <p><strong>${pricing.departureFlight.plane.name}</strong></p>
-                <p>${pricing.departureFlight.departureCity} → ${
-          pricing.departureFlight.destinationCity
-        }</p>
-                <p>${new Date(
-                  pricing.departureFlight.departureDate
-                ).toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}</p>
-                <p>Kursi: <strong>${
-                  departureSeat.seatNumber
-                }</strong> (${seatType})</p>
-              </div>
-              
-              <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #22C55E;">🔄 Penerbangan Pulang</h3>
-                <p><strong>${pricing.returnFlight.plane.name}</strong></p>
-                <p>${pricing.returnFlight.departureCity} → ${
-          pricing.returnFlight.destinationCity
-        }</p>
-                <p>${new Date(
-                  pricing.returnFlight.departureDate
-                ).toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}</p>
-                <p>Kursi: <strong>${
-                  returnSeat.seatNumber
-                }</strong> (${seatType})</p>
-              </div>
-              
-              <div style="background: linear-gradient(135deg, #4C1D95, #7C3AED); padding: 20px; border-radius: 10px; color: white;">
-                <h3 style="margin-top: 0;">💰 Rincian Pembayaran</h3>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                  <span>Penerbangan Pergi:</span>
-                  <span>Rp ${pricing.departurePrice.toLocaleString(
-                    "id-ID"
-                  )}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                  <span>Penerbangan Pulang:</span>
-                  <span>Rp ${pricing.returnPrice.toLocaleString("id-ID")}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #86EFAC;">
-                  <span>Diskon Round Trip (${pricing.discountPercent}%):</span>
-                  <span>-Rp ${pricing.discountAmount.toLocaleString(
-                    "id-ID"
-                  )}</span>
-                </div>
-                <hr style="border-color: rgba(255,255,255,0.3); margin: 12px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
-                  <span>TOTAL:</span>
-                  <span>Rp ${pricing.totalPrice.toLocaleString("id-ID")}</span>
-                </div>
-              </div>
-              
-              <p style="text-align: center; margin-top: 30px; color: #6b7280;">
-                Kode Booking: <strong style="color: #4C1D95;">${bookingCode}</strong>
-              </p>
-              
-              <p>Terima kasih telah memilih FlyHan!</p>
-            </div>
-          </div>
-        `,
+        html: emailHtml,
       });
-    } catch (emailError) {
-      console.error("Failed to send email:", emailError);
+    } catch (e) {
+      console.error("Email error:", e);
     }
 
     revalidatePath("/my-tickets");
     return { success: true, bookingCode };
   } catch (error) {
     console.error("Round trip checkout error:", error);
-    return { error: "Failed to process booking" };
+    return { error: "Failed to process booking " + error };
   }
 }
 

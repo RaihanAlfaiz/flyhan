@@ -84,6 +84,7 @@ export interface FlightSearchParams {
   departureCode?: string;
   arrivalCode?: string;
   date?: string;
+  dateOnOrAfter?: boolean; // If true, show flights on or after the date instead of exact date
   seatType?: "ECONOMY" | "BUSINESS" | "FIRST";
   passengerCount?: number;
   // New filter params
@@ -100,6 +101,7 @@ export async function searchFlights(params: FlightSearchParams) {
       departureCode,
       arrivalCode,
       date,
+      dateOnOrAfter = false,
       seatType,
       passengerCount = 1,
       sort,
@@ -130,19 +132,25 @@ export async function searchFlights(params: FlightSearchParams) {
     }
 
     if (date) {
-      // Filter by date (same day) but still must be in the future
       const searchDate = new Date(date);
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
-
-      // Only search if date is in the future
       const now = new Date();
       const startDate = searchDate > now ? searchDate : now;
 
-      whereClause.departureDate = {
-        gte: startDate,
-        lt: nextDay,
-      };
+      if (dateOnOrAfter) {
+        // For return flights: show on or after the date
+        whereClause.departureDate = {
+          gte: startDate,
+        };
+      } else {
+        // For departure flights: show exact date only
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        whereClause.departureDate = {
+          gte: startDate,
+          lt: nextDay,
+        };
+      }
     }
 
     // Filter by airlines (plane codes)

@@ -51,9 +51,11 @@ interface FlightCardProps {
   isRoundTrip?: boolean;
   flightType?: "departure" | "return";
   selectedDepartureFlightId?: string;
+  passengers?: number;
   onSelectFlight?: (
     flightId: string,
-    flightType: "departure" | "return"
+    flightType: "departure" | "return",
+    seatType?: string
   ) => void;
 }
 
@@ -63,6 +65,7 @@ export default function FlightCard({
   isRoundTrip = false,
   flightType = "departure",
   selectedDepartureFlightId,
+  passengers = 1,
   onSelectFlight,
 }: FlightCardProps) {
   const router = useRouter();
@@ -101,7 +104,7 @@ export default function FlightCard({
     if (flightType === "departure") {
       // Store departure flight selection and scroll to return flights
       if (onSelectFlight) {
-        onSelectFlight(flight.id, "departure");
+        onSelectFlight(flight.id, "departure", seatType);
       }
     } else if (flightType === "return" && selectedDepartureFlightId) {
       // Navigate to round trip checkout with both flights
@@ -109,7 +112,8 @@ export default function FlightCard({
       params.set("departureFlightId", selectedDepartureFlightId);
       params.set("returnFlightId", flight.id);
       if (seatType) params.set("seatType", seatType);
-      router.push(`/checkout/round-trip?${params.toString()}`);
+      params.set("passengers", String(passengers));
+      router.push(`/choose-seat/round-trip?${params.toString()}`);
     }
   };
 
