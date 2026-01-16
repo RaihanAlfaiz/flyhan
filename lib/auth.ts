@@ -22,6 +22,13 @@ export const lucia = new Lucia(adapter, {
       avatar: attributes.avatar,
     };
   },
+  getSessionAttributes: (attributes) => {
+    return {
+      ipAddress: attributes.ipAddress,
+      userAgent: attributes.userAgent,
+      lastActive: attributes.lastActive,
+    };
+  },
 });
 
 export const getUser = cache(async () => {
@@ -61,6 +68,11 @@ declare module "lucia" {
       role: string;
       passport: string | null;
       avatar: string | null;
+    };
+    DatabaseSessionAttributes: {
+      ipAddress?: string | null;
+      userAgent?: string | null;
+      lastActive?: Date;
     };
   }
 }

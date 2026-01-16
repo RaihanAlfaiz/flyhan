@@ -230,8 +230,34 @@ export async function searchFlights(params: FlightSearchParams) {
       orderBy,
     });
 
+    // Rating Aggregation
+    const planeIds = Array.from(new Set(flights.map((f) => f.planeId)));
+
+    // Check if there are any planes to query (avoid empty IN clause)
+    let ratingMap = new Map<string, number>();
+
+    if (planeIds.length > 0) {
+      const ratings = await prisma.review.groupBy({
+        by: ["airplaneId"],
+        _avg: { rating: true },
+        where: { airplaneId: { in: planeIds } },
+      });
+
+      ratings.forEach((r) => {
+        ratingMap.set(r.airplaneId, r._avg.rating || 0);
+      });
+    }
+
+    const flightsWithRating = flights.map((f) => ({
+      ...f,
+      plane: {
+        ...f.plane,
+        rating: ratingMap.get(f.planeId) || 0,
+      },
+    }));
+
     // Filter flights that have enough available seats for the passenger count
-    let filteredFlights = flights.filter(
+    let filteredFlights = flightsWithRating.filter(
       (flight) => flight.seats.length >= passengerCount
     );
 

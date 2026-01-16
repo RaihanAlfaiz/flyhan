@@ -5,7 +5,7 @@ import { signupSchema } from "./validation";
 import prisma from "@/lib/prisma";
 import { hash } from "@node-rs/bcrypt";
 import { lucia } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 export interface ActionResult {
   errorTitle: string | null;
@@ -68,7 +68,15 @@ export async function handleSignUp(
   });
 
   // Create session and set cookie
-  const session = await lucia.createSession(newUser.id, {});
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for")?.split(",")[0] || "unknown";
+  const ua = headersList.get("user-agent") || "unknown";
+
+  const session = await lucia.createSession(newUser.id, {
+    ipAddress: ip,
+    userAgent: ua,
+    lastActive: new Date(),
+  });
   const sessionCookie = await lucia.createSessionCookie(session.id);
 
   (await cookies()).set(

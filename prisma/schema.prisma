@@ -59,6 +59,33 @@ model User {
   sessions      Session[]
   packageOrders PackageOrder[]
   savedFlights  SavedFlight[]
+  notifications Notification[]
+  reviews       Review[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, PROMO, TRANSACTION, SYSTEM
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade) // Added onDelete Cascade
+  ticketId   String   @unique
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  airplaneId String
+  airplane   Airplane @relation(fields: [airplaneId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
 }
 
 model SavedFlight {
@@ -78,6 +105,9 @@ model Session {
   userId    String
   expiresAt DateTime
   user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  lastActive DateTime @default(now())
 }
 
 model Airplane {
@@ -86,6 +116,7 @@ model Airplane {
   name   String
   image  String
   flight Flight[]
+  reviews Review[]
 }
 
 model Flight {
@@ -164,6 +195,7 @@ model Ticket {
   // Gate check-in
   isBoarded Boolean   @default(false)
   boardedAt DateTime?
+  review    Review?
 }
 
 model Passenger {

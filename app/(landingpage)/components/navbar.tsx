@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getUser } from "@/lib/auth";
-import ButtonLogout from "./button-logout";
-import { Heart, Ticket } from "lucide-react";
+import { Heart } from "lucide-react";
+import NotificationDropdown from "./notification-dropdown";
+import UserDropdown from "./user-dropdown";
 
 export default async function Navbar() {
   const { session, user } = await getUser();
@@ -47,27 +48,16 @@ export default async function Navbar() {
           </li>
         </ul>
 
-        {isLoggedIn ? (
+        {user ? (
           <div className="flex items-center gap-3 pl-4 border-l border-white/20 ml-4">
+            <NotificationDropdown />
             <Link href="/wishlist" className="relative group" title="Wishlist">
               <div className="p-2 rounded-full hover:bg-white/10 transition-colors">
                 <Heart className="w-5 h-5 text-white group-hover:text-pink-500 transition-colors" />
               </div>
             </Link>
-            <Link
-              href="/my-tickets"
-              className="relative group"
-              title="My Tickets"
-            >
-              <div className="p-2 rounded-full hover:bg-white/10 transition-colors">
-                <Ticket className="w-5 h-5 text-white group-hover:text-flysha-light-purple transition-colors" />
-              </div>
-            </Link>
 
-            <span className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-10 w-10 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center text-sm ml-2">
-              {user?.name?.slice(0, 2).toUpperCase() || "U"}
-            </span>
-            <ButtonLogout />
+            <UserDropdown user={user} />
           </div>
         ) : (
           <div className="pl-4 border-l border-white/20 ml-4">

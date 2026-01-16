@@ -7,6 +7,7 @@ import {
   ChangePasswordForm,
 } from "./components/edit-profile-form";
 import { User } from "lucide-react";
+import SessionManager from "./components/session-manager";
 
 export default async function ProfileSettingsPage() {
   const { user } = await getUser();
@@ -121,6 +122,9 @@ export default async function ProfileSettingsPage() {
 
             {/* Password Change */}
             <ChangePasswordForm />
+
+            {/* Session Manager */}
+            <SessionManager />
           </div>
         </div>
       </section>

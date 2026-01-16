@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { useState } from "react";
 import { toggleSavedFlight } from "@/app/(landingpage)/(home)/wishlist/lib/actions";
 
@@ -44,6 +44,7 @@ interface FlightCardProps {
       name: string;
       code: string;
       image: string;
+      rating?: number;
     };
     seats: {
       id: string;
@@ -169,6 +170,14 @@ export default function FlightCard({
         </div>
         <div className="flex flex-col justify-center gap-[2px]">
           <p className="font-bold text-lg">{flight.plane.name}</p>
+          {flight.plane.rating && flight.plane.rating > 0 ? (
+            <div className="flex items-center gap-1 mb-1">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+              <span className="text-xs font-bold text-flysha-black">
+                {flight.plane.rating.toFixed(1)}
+              </span>
+            </div>
+          ) : null}
           <p className="text-sm text-flysha-off-purple">{seatLabel}</p>
         </div>
       </div>
