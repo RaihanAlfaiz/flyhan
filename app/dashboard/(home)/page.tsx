@@ -24,6 +24,7 @@ import MetricCard from "./ui/metric-card/MetricCard";
 import Button from "./ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "./ui/table";
 import Badge from "./ui/badge/Badge";
+import AnalyticsDashboard from "./components/analytics-dashboard";
 
 function formatCurrency(amount: bigint | number) {
   return new Intl.NumberFormat("id-ID", {
@@ -339,6 +340,9 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Overview */}
+      <AnalyticsDashboard />
 
       {/* Content Grid */}
       <div className="grid grid-cols-12 gap-6">
