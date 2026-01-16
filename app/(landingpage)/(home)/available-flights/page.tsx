@@ -2,11 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { searchFlights, getAirplanes } from "../../lib/data";
 import { getUser } from "@/lib/auth";
-import ButtonLogout from "../../components/button-logout";
 import FlightFilters from "./components/flight-filters";
 import FlightCard from "./components/flight-card";
 import RoundTripFlightList from "./components/round-trip-list";
+import Navbar from "../../components/navbar";
 import { getRoundTripDiscount } from "../checkout/round-trip/lib/actions";
+import { getUserSavedFlightIds } from "@/app/(landingpage)/(home)/wishlist/lib/actions";
 
 // Format currency
 function formatCurrency(amount: number): string {
@@ -25,67 +26,6 @@ function formatTime(date: Date): string {
     minute: "2-digit",
     hour12: false,
   });
-}
-
-// Navbar Component
-async function Navbar() {
-  const { session, user } = await getUser();
-  const isLoggedIn = !!session;
-
-  return (
-    <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]">
-      <Link href="/" className="flex items-center shrink-0">
-        <Image
-          src="/assets/images/logos/logo.svg"
-          alt="Flyhan Logo"
-          width={120}
-          height={40}
-          priority
-        />
-      </Link>
-      <ul className="flex gap-[30px] items-center w-fit">
-        <li>
-          <Link
-            href="/"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
-          >
-            Home
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
-          >
-            Discover
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="#"
-            className="font-medium text-white hover:text-flysha-light-purple transition-colors"
-          >
-            About
-          </Link>
-        </li>
-        {isLoggedIn ? (
-          <>
-            <span className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center">
-              {user?.name?.slice(0, 2).toUpperCase() || "U"}
-            </span>
-            <ButtonLogout />
-          </>
-        ) : (
-          <Link
-            href="/signin"
-            className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[30px] py-[12px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF]"
-          >
-            Sign In
-          </Link>
-        )}
-      </ul>
-    </nav>
-  );
 }
 
 // Page Props
@@ -189,6 +129,9 @@ export default async function AvailableFlightsPage({
   // Get round trip discount for display
   const roundTripDiscount = isRoundTrip ? await getRoundTripDiscount() : 0;
 
+  // Get saved flights status
+  const savedFlightIds = await getUserSavedFlightIds();
+
   return (
     <div className="text-white font-sans bg-flysha-black min-h-screen">
       {/* Header Section */}
@@ -282,18 +225,20 @@ export default async function AvailableFlightsPage({
               returnDate={returnDateParam}
               discountPercent={roundTripDiscount}
               passengers={passengerCount}
+              savedFlightIds={savedFlightIds}
             />
           ) : (
             <div className="ticket-container flex flex-col w-full gap-6">
               {flights.length > 0 ? (
                 <>
-                  {flights.flatMap((flight) => {
+                  {flights.map((flight) => {
                     if (seatType) {
                       return [
                         <FlightCard
                           key={flight.id}
                           flight={flight}
                           seatType={seatType}
+                          isSaved={savedFlightIds.includes(flight.id)}
                         />,
                       ];
                     }
@@ -315,6 +260,7 @@ export default async function AvailableFlightsPage({
                           key={`${flight.id}-ECO`}
                           flight={flight}
                           seatType="ECONOMY"
+                          isSaved={savedFlightIds.includes(flight.id)}
                         />
                       );
                     if (hasBusiness)
@@ -323,6 +269,7 @@ export default async function AvailableFlightsPage({
                           key={`${flight.id}-BUS`}
                           flight={flight}
                           seatType="BUSINESS"
+                          isSaved={savedFlightIds.includes(flight.id)}
                         />
                       );
                     if (hasFirst)
@@ -331,12 +278,17 @@ export default async function AvailableFlightsPage({
                           key={`${flight.id}-FIRST`}
                           flight={flight}
                           seatType="FIRST"
+                          isSaved={savedFlightIds.includes(flight.id)}
                         />
                       );
 
                     if (cards.length === 0) {
                       cards.push(
-                        <FlightCard key={flight.id} flight={flight} />
+                        <FlightCard
+                          key={flight.id}
+                          flight={flight}
+                          isSaved={savedFlightIds.includes(flight.id)}
+                        />
                       );
                     }
                     return cards;

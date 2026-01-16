@@ -3,6 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Heart } from "lucide-react";
+import { useState } from "react";
+import { toggleSavedFlight } from "@/app/(landingpage)/(home)/wishlist/lib/actions";
 
 // Format currency
 function formatCurrency(amount: number): string {
@@ -57,6 +60,7 @@ interface FlightCardProps {
     flightType: "departure" | "return",
     seatType?: string
   ) => void;
+  isSaved?: boolean;
 }
 
 export default function FlightCard({
@@ -66,10 +70,32 @@ export default function FlightCard({
   flightType = "departure",
   selectedDepartureFlightId,
   passengers = 1,
+
   onSelectFlight,
+  isSaved: initialIsSaved = false,
 }: FlightCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isSaved, setIsSaved] = useState(initialIsSaved);
+
+  const handleToggleSave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Optimistic UI update
+    const previous = isSaved;
+    setIsSaved(!previous);
+
+    const res = await toggleSavedFlight(flight.id);
+    if (res.error) {
+      if (res.error === "Unauthorized") {
+        router.push("/signin");
+      } else {
+        // Revert on error
+        setIsSaved(previous);
+      }
+    }
+  };
 
   // Determine display price based on seat type
   let displayPrice = flight.price;
@@ -173,6 +199,19 @@ export default function FlightCard({
 
       {/* Price */}
       <div className="flex flex-col items-end w-[150px]">
+        <button
+          type="button"
+          onClick={handleToggleSave}
+          className="mb-2 p-1 rounded-full hover:bg-white/10 transition-colors group"
+        >
+          <Heart
+            className={`w-5 h-5 transition-all ${
+              isSaved
+                ? "fill-pink-500 text-pink-500"
+                : "text-gray-400 group-hover:text-pink-400"
+            }`}
+          />
+        </button>
         <p className="font-bold text-lg text-right">
           {formatCurrency(displayPrice)}
         </p>

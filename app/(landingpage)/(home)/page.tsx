@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getUser } from "@/lib/auth";
 import ButtonLogout from "../components/button-logout";
+import { Heart } from "lucide-react";
 import {
   getAllCities,
   getBestSelectives,
@@ -71,6 +72,14 @@ function Navbar({ user }: { user: User | null }) {
         </li>
         {user ? (
           <div className="flex items-center gap-4">
+            <Link
+              href="/wishlist"
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              title="My Wishlist"
+            >
+              <Heart className="w-6 h-6 text-white hover:text-pink-500 transition-colors" />
+            </Link>
+
             <Link
               href="/my-tickets"
               className="font-bold text-flysha-black bg-flysha-light-purple rounded-full px-[20px] py-[10px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] text-sm"

@@ -58,6 +58,19 @@ model User {
   tickets       Ticket[]
   sessions      Session[]
   packageOrders PackageOrder[]
+  savedFlights  SavedFlight[]
+}
+
+model SavedFlight {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flightId    String
+  flight      Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  priceAtSave Int
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, flightId])
 }
 
 model Session {
@@ -76,9 +89,9 @@ model Airplane {
 }
 
 model Flight {
-  id                  String       @id @default(cuid())
+  id                  String        @id @default(cuid())
   planeId             String
-  plane               Airplane     @relation(fields: [planeId], references: [id])
+  plane               Airplane      @relation(fields: [planeId], references: [id])
   departureDate       DateTime
   departureCity       String
   departureCityCode   String
@@ -86,43 +99,44 @@ model Flight {
   destinationCity     String
   destinationCityCode String
   price               Int
-  priceEconomy       Int    @default(0)
-  priceBusiness      Int    @default(0)
-  priceFirst         Int    @default(0)
-  status              FlightStatus @default(SCHEDULED)
+  priceEconomy        Int           @default(0)
+  priceBusiness       Int           @default(0)
+  priceFirst          Int           @default(0)
+  status              FlightStatus  @default(SCHEDULED)
   seats               FlightSeat[]
   tickets             Ticket[]
   flashSales          FlashSale[]
+  SavedFlight         SavedFlight[]
 }
 
 model FlashSale {
-  id                String    @id @default(cuid())
-  title             String
-  description       String?
-  flightId          String
-  flight            Flight    @relation(fields: [flightId], references: [id])
-  discountPercent   Int       // e.g. 50 for 50% off
-  startDate         DateTime
-  endDate           DateTime
-  maxQuota          Int       @default(10) // Max tickets at flash sale price
-  soldCount         Int       @default(0)  // How many have been sold
-  isActive          Boolean   @default(true)
-  image             String?
-  createdAt         DateTime  @default(now())
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  flightId        String
+  flight          Flight   @relation(fields: [flightId], references: [id])
+  discountPercent Int // e.g. 50 for 50% off
+  startDate       DateTime
+  endDate         DateTime
+  maxQuota        Int      @default(10) // Max tickets at flash sale price
+  soldCount       Int      @default(0) // How many have been sold
+  isActive        Boolean  @default(true)
+  image           String?
+  createdAt       DateTime @default(now())
 }
 
 model FlightSeat {
-  id           String    @id @default(cuid())
-  flightId     String
-  flight       Flight    @relation(fields: [flightId], references: [id])
-  seatNumber   String
-  isBooked     Boolean?  @default(false)
-  type         TypeSeat
-  ticket       Ticket?
-  
+  id         String   @id @default(cuid())
+  flightId   String
+  flight     Flight   @relation(fields: [flightId], references: [id])
+  seatNumber String
+  isBooked   Boolean? @default(false)
+  type       TypeSeat
+  ticket     Ticket?
+
   // Seat Hold System
   holdUntil    DateTime? // When the hold expires
-  heldByUserId String?   // User who is holding this seat
+  heldByUserId String? // User who is holding this seat
 }
 
 model Ticket {
@@ -138,84 +152,84 @@ model Ticket {
   price         BigInt
   status        StatusTicket
   tokenMidtrans String?
-  
+
   // Relations for new features
-  passengerId   String?      @unique
-  passenger     Passenger?   @relation(fields: [passengerId], references: [id])
-  promoCodeId   String?
-  promoCode     PromoCode?   @relation(fields: [promoCodeId], references: [id])
+  passengerId    String?         @unique
+  passenger      Passenger?      @relation(fields: [passengerId], references: [id])
+  promoCodeId    String?
+  promoCode      PromoCode?      @relation(fields: [promoCodeId], references: [id])
   refundRequests RefundRequest[]
-  addons        TicketAddon[]
-  
+  addons         TicketAddon[]
+
   // Gate check-in
-  isBoarded     Boolean      @default(false)
-  boardedAt     DateTime?
+  isBoarded Boolean   @default(false)
+  boardedAt DateTime?
 }
 
 model Passenger {
-  id        String  @id @default(cuid())
-  name      String
-  passport  String?
-  ticket    Ticket?
+  id       String  @id @default(cuid())
+  name     String
+  passport String?
+  ticket   Ticket?
 }
 
 model PromoCode {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  discount   Int      @default(0)
-  isActive   Boolean  @default(true)
+  id         String    @id @default(cuid())
+  code       String    @unique
+  discount   Int       @default(0)
+  isActive   Boolean   @default(true)
   validUntil DateTime?
   tickets    Ticket[]
 }
 
 model RefundRequest {
-  id            String       @id @default(cuid())
-  ticketId      String
-  ticket        Ticket       @relation(fields: [ticketId], references: [id])
-  type          RefundType
-  reason        String
-  status        RefundStatus @default(PENDING)
-  
+  id       String       @id @default(cuid())
+  ticketId String
+  ticket   Ticket       @relation(fields: [ticketId], references: [id])
+  type     RefundType
+  reason   String
+  status   RefundStatus @default(PENDING)
+
   // Refund calculation
-  originalAmount  Int?         // Original ticket price
-  refundAmount    Int?         // Calculated refund amount
-  refundPercent   Int?         // Percentage of refund (100, 75, 50, 25, 0)
-  
+  originalAmount Int? // Original ticket price
+  refundAmount   Int? // Calculated refund amount
+  refundPercent  Int? // Percentage of refund (100, 75, 50, 25, 0)
+
   // Reschedule fields
-  newFlightId   String?
-  newSeatId     String?
-  
+  newFlightId String?
+  newSeatId   String?
+
   // Admin processing
-  adminNotes    String?
-  processedAt   DateTime?
-  
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  adminNotes  String?
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BestSelective {
-  id        String   @id @default(cuid())
-  title     String
-  subtitle  String
-  image     String
-  url       String?
+  id       String  @id @default(cuid())
+  title    String
+  subtitle String
+  image    String
+  url      String?
 }
 
 model FlightAddon {
-  id          String   @id @default(cuid())
-  code        String   @unique
+  id          String        @id @default(cuid())
+  code        String        @unique
   title       String
   description String?
-  price       Int      @default(0)
+  price       Int           @default(0)
   tickets     TicketAddon[]
 }
 
 model TicketAddon {
-  id            String       @id @default(cuid())
+  id            String      @id @default(cuid())
   ticketId      String
-  ticket        Ticket       @relation(fields: [ticketId], references: [id])
+  ticket        Ticket      @relation(fields: [ticketId], references: [id])
   flightAddonId String
-  flightAddon   FlightAddon  @relation(fields: [flightAddonId], references: [id])
+  flightAddon   FlightAddon @relation(fields: [flightAddonId], references: [id])
   requestDetail String? // e.g. "Pick me up with Toyota Alphard"
 }
 
@@ -253,42 +267,42 @@ model PackageOrder {
 
 // App Settings for configurable values
 model AppSettings {
-  id              String   @id @default(cuid())
-  key             String   @unique
-  value           String
-  description     String?
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
 }
 
 // Round Trip Booking - bundles departure and return tickets
 model RoundTripBooking {
-  id                String       @id @default(cuid())
-  code              String       @unique
-  customerId        String
-  
+  id         String @id @default(cuid())
+  code       String @unique
+  customerId String
+
   // Departure flight info
   departureFlightId String
   departureSeatId   String
   departurePrice    BigInt
-  
+
   // Return flight info  
-  returnFlightId    String
-  returnSeatId      String
-  returnPrice       BigInt
-  
+  returnFlightId String
+  returnSeatId   String
+  returnPrice    BigInt
+
   // Pricing
-  subtotal          BigInt       // Total before discount
-  discountPercent   Int          @default(0)
-  discountAmount    BigInt       @default(0)
-  totalPrice        BigInt       // Final price after discount
-  
+  subtotal        BigInt // Total before discount
+  discountPercent Int    @default(0)
+  discountAmount  BigInt @default(0)
+  totalPrice      BigInt // Final price after discount
+
   // Booking info
-  status            StatusTicket @default(PENDING)
-  tokenMidtrans     String?
-  bookingDate       DateTime     @default(now())
-  
+  status        StatusTicket @default(PENDING)
+  tokenMidtrans String?
+  bookingDate   DateTime     @default(now())
+
   // Passenger info
   passengerName     String?
   passengerPassport String?
-  seatType          TypeSeat     @default(ECONOMY)
+  seatType          TypeSeat @default(ECONOMY)
 }

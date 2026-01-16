@@ -38,6 +38,7 @@ interface RoundTripFlightListProps {
   returnDate?: string;
   discountPercent: number;
   passengers?: number;
+  savedFlightIds?: string[];
 }
 
 export default function RoundTripFlightList({
@@ -50,6 +51,7 @@ export default function RoundTripFlightList({
   returnDate,
   discountPercent,
   passengers = 1,
+  savedFlightIds = [],
 }: RoundTripFlightListProps) {
   const [selectedDepartureFlightId, setSelectedDepartureFlightId] =
     useState<string>("");
@@ -181,6 +183,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />,
             ];
           }
@@ -201,6 +204,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
           if (hasBusiness)
@@ -214,6 +218,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
           if (hasFirst)
@@ -227,6 +232,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
 
@@ -240,6 +246,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
 
@@ -304,6 +311,7 @@ export default function RoundTripFlightList({
                   selectedDepartureFlightId={selectedDepartureFlightId}
                   passengers={passengers}
                   onSelectFlight={handleSelectFlight}
+                  isSaved={savedFlightIds.includes(flight.id)}
                 />,
               ];
             }
@@ -332,6 +340,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
           if (hasBusiness)
@@ -345,6 +354,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
           if (hasFirst)
@@ -358,6 +368,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
 
@@ -371,6 +382,7 @@ export default function RoundTripFlightList({
                 selectedDepartureFlightId={selectedDepartureFlightId}
                 passengers={passengers}
                 onSelectFlight={handleSelectFlight}
+                isSaved={savedFlightIds.includes(flight.id)}
               />
             );
 
