@@ -35,7 +35,12 @@ export async function verifyTicketCheckIn(
       return { success: false, message: "Tiket tidak ditemukan!" };
     }
 
-    const passengerName = ticket.passenger?.name || ticket.customer.name;
+    // Get passenger name - handle counter bookings where customer may be null
+    const passengerName =
+      ticket.passenger?.name ||
+      ticket.customer?.name ||
+      ticket.counterCustomerName ||
+      "Walk-in Customer";
     const flightInfo = `${ticket.flight.plane.code} - ${ticket.flight.plane.name}`;
 
     // 1. Check if already boarded

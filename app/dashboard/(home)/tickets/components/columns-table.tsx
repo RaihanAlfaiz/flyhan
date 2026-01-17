@@ -9,6 +9,7 @@ import type {
   StatusTicket,
   TicketAddon,
   FlightAddon,
+  BookingType,
 } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Trash2, Plane, RefreshCw, Info } from "lucide-react";
@@ -25,7 +26,7 @@ import Swal from "sweetalert2";
 
 interface TicketWithRelations extends Ticket {
   flight: Flight & { plane: Airplane };
-  customer: Pick<User, "id" | "name" | "email">;
+  customer: Pick<User, "id" | "name" | "email"> | null;
   seat: FlightSeat;
   addons: (TicketAddon & { flightAddon: FlightAddon })[];
 }
@@ -249,6 +250,29 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
     header: "Customer",
     cell: ({ row }) => {
       const customer = row.original.customer;
+      const isCounter = row.original.bookingType === "COUNTER";
+
+      // For counter bookings without customer account
+      if (!customer) {
+        return (
+          <div>
+            <p className="font-medium text-gray-800 dark:text-white/90">
+              {row.original.counterCustomerName || "Walk-in Customer"}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {row.original.counterCustomerPhone ||
+                row.original.counterCustomerEmail ||
+                "Counter Booking"}
+            </p>
+            {isCounter && (
+              <span className="inline-flex mt-1 items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
+                COUNTER
+              </span>
+            )}
+          </div>
+        );
+      }
+
       return (
         <div>
           <p className="font-medium text-gray-800 dark:text-white/90">
@@ -257,6 +281,11 @@ export const columns: ColumnDef<TicketWithRelations>[] = [
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {customer.email}
           </p>
+          {isCounter && (
+            <span className="inline-flex mt-1 items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
+              COUNTER
+            </span>
+          )}
         </div>
       );
     },

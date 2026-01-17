@@ -396,46 +396,50 @@ export default async function DashboardPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    recentTickets.map((ticket) => (
-                      <TableRow key={ticket.id}>
-                        <TableCell className="px-5 py-4 text-start">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-sm">
-                              {ticket.customer.name
-                                .substring(0, 2)
-                                .toUpperCase()}
+                    recentTickets.map((ticket) => {
+                      const customerName =
+                        ticket.customer?.name ||
+                        ticket.counterCustomerName ||
+                        "Walk-in";
+                      return (
+                        <TableRow key={ticket.id}>
+                          <TableCell className="px-5 py-4 text-start">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                                {customerName.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <span className="block font-medium text-gray-800 text-sm dark:text-white/90">
+                                  {customerName}
+                                </span>
+                                <span className="block text-gray-500 text-xs">
+                                  {formatDate(ticket.bookingDate)}
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="block font-medium text-gray-800 text-sm dark:text-white/90">
-                                {ticket.customer.name}
+                          </TableCell>
+                          <TableCell className="px-5 py-4">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-medium text-gray-800 dark:text-white/90">
+                                {ticket.flight.departureCityCode}
                               </span>
-                              <span className="block text-gray-500 text-xs">
-                                {formatDate(ticket.bookingDate)}
+                              <Plane className="w-3 h-3 text-gray-400" />
+                              <span className="font-medium text-gray-800 dark:text-white/90">
+                                {ticket.flight.destinationCityCode}
                               </span>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-5 py-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="font-medium text-gray-800 dark:text-white/90">
-                              {ticket.flight.departureCityCode}
-                            </span>
-                            <Plane className="w-3 h-3 text-gray-400" />
-                            <span className="font-medium text-gray-800 dark:text-white/90">
-                              {ticket.flight.destinationCityCode}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-5 py-4">
-                          <Badge size="sm" color="primary">
-                            {ticket.seat.seatNumber}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="px-5 py-4 text-gray-800 font-semibold text-sm dark:text-white/90">
-                          {formatCurrency(ticket.price)}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          </TableCell>
+                          <TableCell className="px-5 py-4">
+                            <Badge size="sm" color="primary">
+                              {ticket.seat.seatNumber}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-5 py-4 text-gray-800 font-semibold text-sm dark:text-white/90">
+                            {formatCurrency(ticket.price)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

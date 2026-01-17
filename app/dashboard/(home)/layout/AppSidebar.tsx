@@ -80,6 +80,11 @@ const navGroups: NavGroup[] = [
         path: "/dashboard/tickets",
       },
       {
+        icon: <ScanLine className="w-5 h-5" />,
+        name: "Counter Booking",
+        path: "/dashboard/counter-booking",
+      },
+      {
         icon: <RefreshCw className="w-5 h-5" />,
         name: "Refund Requests",
         path: "/dashboard/refund-requests",

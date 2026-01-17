@@ -30,6 +30,19 @@ enum StatusTicket {
   FAILED
 }
 
+enum BookingType {
+  ONLINE  // Customer books via website
+  COUNTER // Admin books for walk-in customer
+}
+
+enum PaymentMethod {
+  MIDTRANS     // Online payment gateway
+  CASH         // Cash at counter
+  BANK_TRANSFER // Bank transfer
+  DEBIT_CARD   // Debit card at counter
+  CREDIT_CARD  // Credit card at counter
+}
+
 enum FlightStatus {
   SCHEDULED
   DELAYED
@@ -175,14 +188,26 @@ model Ticket {
   code          String       @unique
   flightId      String
   flight        Flight       @relation(fields: [flightId], references: [id])
-  customerId    String
-  customer      User         @relation(fields: [customerId], references: [id])
+  customerId    String?      // Optional for counter bookings
+  customer      User?        @relation(fields: [customerId], references: [id])
   seatId        String       @unique
   seat          FlightSeat   @relation(fields: [seatId], references: [id])
   bookingDate   DateTime
   price         BigInt
   status        StatusTicket
   tokenMidtrans String?
+
+  // Booking Type & Payment
+  bookingType   BookingType   @default(ONLINE)
+  paymentMethod PaymentMethod @default(MIDTRANS)
+  
+  // Counter Booking - Admin who booked
+  bookedById    String?       // Admin user ID who processed counter booking
+  
+  // Counter Customer Info (when no account)
+  counterCustomerName  String?
+  counterCustomerPhone String?
+  counterCustomerEmail String?
 
   // Relations for new features
   passengerId    String?         @unique
