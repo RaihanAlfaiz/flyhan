@@ -94,7 +94,7 @@ export default function BestSelectiveSection({
   return (
     <section
       id="Discover"
-      className="container max-w-[1130px] mx-auto flex flex-col pt-[100px] gap-[30px]"
+      className="container max-w-[1130px] mx-auto flex flex-col pt-[100px] gap-[30px] px-4 md:px-0"
     >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-[32px] leading-[48px] text-center text-white">

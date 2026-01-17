@@ -609,9 +609,10 @@ export default function SearchForm({ cities }: SearchFormProps) {
       className="bg-white text-flysha-black w-full rounded-[20px] p-6"
     >
       {/* Fields Row */}
-      <div className="flex items-center justify-between gap-6 mb-5">
+      {/* Fields Row */}
+      <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6 mb-5 w-full">
         {/* Departure */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-50">
           <span className="text-sm text-gray-500">Departure</span>
           <CustomDropdown
             label=""
@@ -630,10 +631,10 @@ export default function SearchForm({ cities }: SearchFormProps) {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-12 bg-gray-200 shrink-0" />
+        <div className="hidden md:block w-px h-12 bg-gray-200 shrink-0" />
 
         {/* Arrival */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-40">
           <span className="text-sm text-gray-500">Arrival</span>
           <CustomDropdown
             label=""
@@ -652,10 +653,10 @@ export default function SearchForm({ cities }: SearchFormProps) {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-12 bg-gray-200 shrink-0" />
+        <div className="hidden md:block w-px h-12 bg-gray-200 shrink-0" />
 
         {/* Date */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-30">
           <span className="text-sm text-gray-500">Departure Date</span>
           <CustomDatePicker label="" value={date} onChange={setDate} />
         </div>
@@ -663,8 +664,8 @@ export default function SearchForm({ cities }: SearchFormProps) {
         {/* Return Date (only show if round trip) */}
         {isRoundTrip && (
           <>
-            <div className="w-px h-12 bg-gray-200 shrink-0" />
-            <div className="flex flex-col gap-2 flex-1">
+            <div className="hidden md:block w-px h-12 bg-gray-200 shrink-0" />
+            <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-20">
               <span className="text-sm text-gray-500">Return Date</span>
               <CustomDatePicker
                 label=""
@@ -676,10 +677,10 @@ export default function SearchForm({ cities }: SearchFormProps) {
         )}
 
         {/* Divider */}
-        <div className="w-px h-12 bg-gray-200 shrink-0" />
+        <div className="hidden md:block w-px h-12 bg-gray-200 shrink-0" />
 
         {/* Passengers */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-10">
           <span className="text-sm text-gray-500">Passengers</span>
           <PassengerCounter
             adults={adults}
@@ -690,10 +691,10 @@ export default function SearchForm({ cities }: SearchFormProps) {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-12 bg-gray-200 shrink-0" />
+        <div className="hidden md:block w-px h-12 bg-gray-200 shrink-0" />
 
         {/* Class */}
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 w-full md:w-auto z-0">
           <span className="text-sm text-gray-500">Seat Class</span>
           <SeatClassDropdown value={seatClass} onChange={setSeatClass} />
         </div>

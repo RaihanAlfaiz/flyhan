@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getUser } from "@/lib/auth";
 import { Heart } from "lucide-react";
+import MobileMenu from "./mobile-menu";
 import NotificationDropdown from "./notification-dropdown";
 import UserDropdown from "./user-dropdown";
 
@@ -10,7 +11,7 @@ export default async function Navbar() {
   const isLoggedIn = !!session;
 
   return (
-    <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px] z-50 relative">
+    <nav className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px] px-4 md:px-0 z-50 relative">
       <Link href="/" className="flex items-center shrink-0">
         <Image
           src="/assets/images/logos/logo.svg"
@@ -20,7 +21,9 @@ export default async function Navbar() {
           priority
         />
       </Link>
-      <div className="flex gap-[30px] items-center w-fit">
+
+      {/* Desktop Menu */}
+      <div className="hidden md:flex gap-[30px] items-center w-fit">
         <ul className="flex gap-[30px] items-center">
           <li>
             <Link
@@ -64,7 +67,7 @@ export default async function Navbar() {
           </li>
           <li>
             <Link
-              href="/#About"
+              href="/about"
               className="font-medium text-white hover:text-flysha-light-purple transition-colors"
             >
               About
@@ -94,6 +97,9 @@ export default async function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Mobile Menu */}
+      <MobileMenu user={user} />
     </nav>
   );
 }

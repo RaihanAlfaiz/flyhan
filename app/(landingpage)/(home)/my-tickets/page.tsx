@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, XCircle, Clock } from "lucide-react";
+import Navbar from "../../components/navbar";
 
 export default async function MyTicketsPage() {
   const { user } = await getUser();
@@ -72,48 +73,8 @@ export default async function MyTicketsPage() {
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[290px] relative"
       >
         <div className="Header-content bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[290px]">
-          <nav
-            id="Navbar"
-            className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]"
-          >
-            <Link href="/" className="flex items-center shrink-0">
-              <Image
-                src="/assets/images/logos/logo.svg"
-                alt="logo"
-                width={120}
-                height={40}
-              />
-            </Link>
-            <ul className="nav-menus flex gap-[30px] items-center w-fit">
-              <li>
-                <Link href="/" className="font-medium">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/my-tickets"
-                  className="font-medium text-flysha-light-purple"
-                >
-                  My Tickets
-                </Link>
-              </li>
-              <Link href="/profile/settings">
-                <div className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center overflow-hidden">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      className="w-full h-full object-cover"
-                      alt="avatar"
-                    />
-                  ) : (
-                    user.name.substring(0, 2).toUpperCase()
-                  )}
-                </div>
-              </Link>
-            </ul>
-          </nav>
-          <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px]">
+          <Navbar />
+          <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px] px-4 md:px-0">
             <h1 className="font-bold text-[32px] leading-[48px]">My Tickets</h1>
             <p className="font-medium text-lg leading-[27px]">
               {tickets.length} tickets booked
@@ -125,9 +86,9 @@ export default async function MyTicketsPage() {
 
       <section
         id="Content"
-        className="container max-w-[1130px] mx-auto flex justify-center -mt-[60px] pb-[100px] z-10 relative"
+        className="container max-w-[1130px] mx-auto flex justify-center -mt-[60px] pb-[100px] z-10 relative px-4 md:px-0"
       >
-        <div className="ticket-container flex flex-col w-[900px] gap-6">
+        <div className="ticket-container flex flex-col w-full max-w-[900px] gap-6">
           {tickets.length > 0 ? (
             tickets.map((ticket) => {
               const flightStatus = (ticket.flight as any).status || "SCHEDULED";
@@ -182,8 +143,8 @@ export default async function MyTicketsPage() {
                   )}
 
                   {/* Ticket Content */}
-                  <div className="flex justify-between items-center p-5">
-                    <div className="flex gap-[16px] items-center">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5 gap-6 md:gap-0">
+                    <div className="flex gap-[16px] items-center w-full md:w-auto">
                       <div className="flex shrink-0 w-[90px] h-[70px] rounded-[14px] overflow-hidden">
                         <img
                           src={ticket.flight.plane.image}
@@ -204,35 +165,41 @@ export default async function MyTicketsPage() {
                         </p>
                       </div>
                     </div>
-                    <p className="w-fit h-fit font-bold text-lg">
-                      {formatDate(ticket.flight.departureDate)}
-                    </p>
-                    <div className="flex items-center gap-[30px]">
-                      <div className="flex flex-col gap-[2px] text-center">
-                        <p className="font-bold text-lg">
-                          {formatTime(ticket.flight.departureDate)}
-                        </p>
-                        <p className="text-sm text-flysha-off-purple">
-                          {ticket.flight.departureCityCode}
-                        </p>
-                      </div>
-                      <img
-                        src="/assets/images/icons/plane-dotted.svg"
-                        alt="icon"
-                      />
-                      <div className="flex flex-col gap-[2px] text-center">
-                        <p className="font-bold text-lg">
-                          {formatTime(ticket.flight.arrivalDate)}
-                        </p>
-                        <p className="text-sm text-flysha-off-purple">
-                          {ticket.flight.destinationCityCode}
-                        </p>
+
+                    <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-[30px] w-full md:w-auto">
+                      <p className="w-fit h-fit font-bold text-lg order-1 md:order-none">
+                        {formatDate(ticket.flight.departureDate)}
+                      </p>
+
+                      <div className="flex items-center gap-4 md:gap-[30px] order-2 md:order-none w-full md:w-auto justify-between md:justify-start bg-flysha-black/20 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none">
+                        <div className="flex flex-col gap-[2px] text-center">
+                          <p className="font-bold text-lg">
+                            {formatTime(ticket.flight.departureDate)}
+                          </p>
+                          <p className="text-sm text-flysha-off-purple">
+                            {ticket.flight.departureCityCode}
+                          </p>
+                        </div>
+                        <img
+                          src="/assets/images/icons/plane-dotted.svg"
+                          alt="icon"
+                          className="w-[100px] md:w-auto opacity-50 md:opacity-100"
+                        />
+                        <div className="flex flex-col gap-[2px] text-center">
+                          <p className="font-bold text-lg">
+                            {formatTime(ticket.flight.arrivalDate)}
+                          </p>
+                          <p className="text-sm text-flysha-off-purple">
+                            {ticket.flight.destinationCityCode}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
+
+                    <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto mt-4 md:mt-0">
                       <Link
                         href={`/my-tickets/detail/${ticket.id}`}
-                        className="font-bold text-flysha-black bg-flysha-light-purple rounded-full p-[12px_20px] h-[48px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex items-center justify-center text-sm"
+                        className="font-bold text-flysha-black bg-flysha-light-purple rounded-full p-[12px_20px] h-[48px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex items-center justify-center text-sm flex-1 md:flex-none"
                       >
                         Details
                       </Link>
@@ -242,42 +209,30 @@ export default async function MyTicketsPage() {
                         ticket.refundRequests.length === 0 && (
                           <Link
                             href={`/my-tickets/refund/${ticket.id}`}
-                            className="font-semibold text-white bg-gradient-to-r from-red-500 to-orange-500 rounded-full p-[8px_16px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#ff6b6b] flex items-center justify-center text-xs"
+                            className="font-semibold text-white bg-gradient-to-r from-red-500 to-orange-500 rounded-full p-[8px_16px] transition-all duration-300 hover:shadow-[0_10px_20px_0_#ff6b6b] flex items-center justify-center text-xs flex-1 md:flex-none text-center"
                           >
-                            Request Refund/Reschedule
+                            Refund/Reschedule
                           </Link>
                         )}
                       {/* Refund Status Display */}
                       {ticket.refundRequests.length > 0 && (
-                        <div className="text-center">
+                        <div className="text-center w-full md:w-auto">
                           {ticket.refundRequests[0].status === "PENDING" && (
-                            <span className="inline-flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full w-full justify-center md:w-auto">
                               <Clock className="h-3 w-3" />
-                              Menunggu Persetujuan
+                              Pending
                             </span>
                           )}
                           {ticket.refundRequests[0].status === "APPROVED" && (
-                            <div className="flex flex-col gap-1">
-                              <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
-                                ✓{" "}
-                                {ticket.refundRequests[0].type === "REFUND"
-                                  ? "Refund"
-                                  : "Reschedule"}{" "}
-                                Disetujui
+                            <div className="flex flex-col gap-1 w-full md:w-auto">
+                              <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-3 py-1 rounded-full justify-center">
+                                ✓ Confirmed
                               </span>
-                              {ticket.refundRequests[0].refundAmount && (
-                                <span className="text-xs text-green-300">
-                                  Rp{" "}
-                                  {Number(
-                                    ticket.refundRequests[0].refundAmount
-                                  ).toLocaleString("id-ID")}
-                                </span>
-                              )}
                             </div>
                           )}
                           {ticket.refundRequests[0].status === "REJECTED" && (
-                            <span className="inline-flex items-center gap-1 text-xs text-red-400 bg-red-500/10 px-3 py-1 rounded-full">
-                              ✕ Permohonan Ditolak
+                            <span className="inline-flex items-center gap-1 text-xs text-red-400 bg-red-500/10 px-3 py-1 rounded-full justify-center">
+                              ✕ Rejected
                             </span>
                           )}
                         </div>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import PassengerForm from "./components/passenger-form";
+import Navbar from "../../components/navbar";
 
 interface PassengerDetailsPageProps {
   searchParams: Promise<{
@@ -58,20 +59,8 @@ export default async function PassengerDetailsPage({
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[290px] relative"
       >
         <div className="Header-content bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[290px]">
-          <nav
-            id="Navbar"
-            className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]"
-          >
-            <Link href="/" className="flex items-center shrink-0">
-              <Image
-                src="/assets/images/logos/logo.svg"
-                alt="logo"
-                width={120}
-                height={40}
-              />
-            </Link>
-          </nav>
-          <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px]">
+          <Navbar />
+          <div className="title container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px] px-4 md:px-0">
             <h1 className="font-bold text-[32px] leading-[48px]">
               Passenger Details
             </h1>
@@ -84,7 +73,7 @@ export default async function PassengerDetailsPage({
 
       <section
         id="Content"
-        className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-20"
+        className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-20 px-4 md:px-0"
       >
         <div className="flex flex-col lg:flex-row gap-[50px]">
           {/* Form Section */}
@@ -100,7 +89,7 @@ export default async function PassengerDetailsPage({
           </div>
 
           {/* Flight Info Sidebar */}
-          <div className="w-[340px] shrink-0 h-fit bg-white rounded-[20px] p-5 text-flysha-black shadow-lg">
+          <div className="w-full max-w-[340px] shrink-0 h-fit bg-white rounded-[20px] p-5 text-flysha-black shadow-lg">
             <h3 className="font-bold text-xl mb-4">Flight Summary</h3>
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">

@@ -238,118 +238,120 @@ export default function SeatSelector({
   return (
     <section
       id="Choose-Seat"
-      className="container flex flex-col lg:flex-row items-center lg:items-start justify-between max-w-[1000px] pt-10 mx-auto pb-10 min-h-screen gap-10"
+      className="container flex flex-col lg:flex-row items-center lg:items-start justify-between max-w-[1000px] pt-10 mx-auto pb-10 min-h-screen gap-10 px-4 md:px-0"
     >
       {/* Plane Seat Map */}
-      <div className="flex items-end justify-center relative">
-        <div className="relative w-[409px]">
-          {/* Plane Body & Wings Background */}
-          <div className="absolute -left-[259px] bottom-0 w-[927px] -z-10 flex justify-center">
-            <Image
-              src="/assets/images/background/plane-wings.svg"
-              alt="wings"
-              width={927}
-              height={200}
-              className="w-[927px]"
-            />
-          </div>
-          <div className="relative -z-0">
-            <Image
-              src="/assets/images/background/plane-body.svg"
-              alt="plane body"
-              width={409}
-              height={782}
-              className="w-full"
-            />
-          </div>
-
-          <div className="absolute top-[18px] left-1/2 -translate-x-1/2">
-            <Image
-              src="/assets/images/background/plane-windshield.svg"
-              alt="windshield"
-              width={200}
-              height={100}
-            />
-          </div>
-
-          {/* Seats Content */}
-          <div className="absolute top-[120px] left-0 right-0 px-[30px] h-[600px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-20">
-            {/* Legend */}
-            <div className="flex gap-[30px] mb-5 justify-center sticky top-0 bg-flysha-bg-purple/90 backdrop-blur-sm p-2 rounded-full z-10 w-fit mx-auto border border-white/10">
-              <div className="flex items-center gap-[6px]">
-                <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-flysha-light-purple" />
-                <span className="font-semibold text-xs">Selected</span>
-              </div>
-              <div className="flex items-center gap-[6px]">
-                <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-[#3D3952]" />
-                <span className="font-semibold text-xs">Taken</span>
-              </div>
-              <div className="flex items-center gap-[6px]">
-                <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-flysha-black border border-white" />
-                <span className="font-semibold text-xs">Available</span>
-              </div>
+      <div className="flex items-end justify-center relative w-full max-w-[409px] lg:max-w-none">
+        <div className="scale-[0.8] sm:scale-[0.9] md:scale-100 origin-top w-full flex justify-center">
+          <div className="relative w-[409px] shrink-0">
+            {/* Plane Body & Wings Background */}
+            <div className="absolute -left-[259px] bottom-0 w-[927px] -z-10 flex justify-center">
+              <Image
+                src="/assets/images/background/plane-wings.svg"
+                alt="wings"
+                width={927}
+                height={200}
+                className="w-[927px]"
+              />
+            </div>
+            <div className="relative -z-0">
+              <Image
+                src="/assets/images/background/plane-body.svg"
+                alt="plane body"
+                width={409}
+                height={782}
+                className="w-full"
+              />
             </div>
 
-            {/* Seat Grid */}
-            <div className="flex flex-col gap-5">
-              {rowsWithMeta.map((row, index) => {
-                // Determine if this row starts a new class type compared to the previous row
-                const isNewType =
-                  index === 0 || rowsWithMeta[index - 1].type !== row.type;
+            <div className="absolute top-[18px] left-1/2 -translate-x-1/2">
+              <Image
+                src="/assets/images/background/plane-windshield.svg"
+                alt="windshield"
+                width={200}
+                height={100}
+              />
+            </div>
 
-                return (
-                  <div key={row.rowNum} className="flex flex-col w-full">
-                    {/* Class Label */}
-                    {isNewType && <SeatClassLabel type={row.type} />}
+            {/* Seats Content */}
+            <div className="absolute top-[120px] left-0 right-0 px-[30px] h-[600px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-20">
+              {/* Legend */}
+              <div className="flex gap-[30px] mb-5 justify-center sticky top-0 bg-flysha-bg-purple/90 backdrop-blur-sm p-2 rounded-full z-10 w-fit mx-auto border border-white/10">
+                <div className="flex items-center gap-[6px]">
+                  <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-flysha-light-purple" />
+                  <span className="font-semibold text-xs">Selected</span>
+                </div>
+                <div className="flex items-center gap-[6px]">
+                  <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-[#3D3952]" />
+                  <span className="font-semibold text-xs">Taken</span>
+                </div>
+                <div className="flex items-center gap-[6px]">
+                  <div className="w-[14px] h-[14px] flex shrink-0 rounded-full bg-flysha-black border border-white" />
+                  <span className="font-semibold text-xs">Available</span>
+                </div>
+              </div>
 
-                    <div className="seat-row flex justify-between">
-                      {/* Left Column */}
-                      <div className="seat-col flex gap-[19px]">
-                        {["A", "B"].map((colChar) => {
-                          const seat = row.seats.find((s) =>
-                            s.seatNumber.endsWith(colChar)
-                          );
-                          if (seat) return renderSeat(seat);
-                          return (
-                            <div
-                              key={`placeholder-${row.rowNum}-${colChar}`}
-                              className="w-[60px] h-[60px]"
-                            />
-                          );
-                        })}
-                      </div>
+              {/* Seat Grid */}
+              <div className="flex flex-col gap-5">
+                {rowsWithMeta.map((row, index) => {
+                  // Determine if this row starts a new class type compared to the previous row
+                  const isNewType =
+                    index === 0 || rowsWithMeta[index - 1].type !== row.type;
 
-                      {/* Right Column */}
-                      <div className="seat-col flex gap-[19px]">
-                        {["C", "D"].map((colChar) => {
-                          const seat = row.seats.find((s) =>
-                            s.seatNumber.endsWith(colChar)
-                          );
-                          if (seat) return renderSeat(seat);
-                          return (
-                            <div
-                              key={`placeholder-${row.rowNum}-${colChar}`}
-                              className="w-[60px] h-[60px]"
-                            />
-                          );
-                        })}
+                  return (
+                    <div key={row.rowNum} className="flex flex-col w-full">
+                      {/* Class Label */}
+                      {isNewType && <SeatClassLabel type={row.type} />}
+
+                      <div className="seat-row flex justify-between">
+                        {/* Left Column */}
+                        <div className="seat-col flex gap-[19px]">
+                          {["A", "B"].map((colChar) => {
+                            const seat = row.seats.find((s) =>
+                              s.seatNumber.endsWith(colChar)
+                            );
+                            if (seat) return renderSeat(seat);
+                            return (
+                              <div
+                                key={`placeholder-${row.rowNum}-${colChar}`}
+                                className="w-[60px] h-[60px]"
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Right Column */}
+                        <div className="seat-col flex gap-[19px]">
+                          {["C", "D"].map((colChar) => {
+                            const seat = row.seats.find((s) =>
+                              s.seatNumber.endsWith(colChar)
+                            );
+                            if (seat) return renderSeat(seat);
+                            return (
+                              <div
+                                key={`placeholder-${row.rowNum}-${colChar}`}
+                                className="w-[60px] h-[60px]"
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Sidebar */}
-      <div className="flex flex-col items-center gap-[30px] pb-[30px]">
+      <div className="flex flex-col items-center gap-[30px] pb-[30px] w-full">
         <h1 className="font-bold text-[32px] leading-[48px] text-center">
           {flight.departureCity} to {flight.destinationCity}
         </h1>
 
-        <div className="flex flex-col items-center gap-[30px] w-[335px]">
+        <div className="flex flex-col items-center gap-[30px] w-full max-w-[335px]">
           {/* Flight Times */}
           <div className="flex flex-col gap-[10px] w-full">
             <div className="flex justify-center shrink-0">

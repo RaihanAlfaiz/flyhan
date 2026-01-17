@@ -167,7 +167,7 @@ export default function FlashSaleSection({
   return (
     <section
       id="FlashSale"
-      className="container max-w-[1130px] mx-auto pt-[100px]"
+      className="container max-w-[1130px] mx-auto pt-[100px] px-4 md:px-0"
     >
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

@@ -141,11 +141,11 @@ export default async function AvailableFlightsPage({
       >
         <div className="bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[290px]">
           <Navbar />
-          <div className="container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px]">
+          <div className="container max-w-[1130px] mx-auto flex flex-col gap-1 pt-[50px] pb-[68px] px-4 md:px-0">
             <h1 className="font-bold text-[32px] leading-[48px]">
               {departureCity} to {arrivalCity}
             </h1>
-            <p className="font-medium text-lg leading-[27px] flex items-center gap-3">
+            <p className="font-medium text-lg leading-[27px] flex items-center gap-3 flex-wrap">
               <span>
                 {flights.length.toLocaleString()} flight
                 {flights.length !== 1 ? "s" : ""} available
@@ -179,7 +179,7 @@ export default async function AvailableFlightsPage({
       {/* Content Section */}
       <section
         id="Content"
-        className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-[105px]"
+        className="container max-w-[1130px] mx-auto -mt-[33px] z-10 relative pb-[105px] px-4 md:px-0"
       >
         {error && (
           <div className="bg-red-500 text-white p-4 rounded-xl mb-6 shadow-lg flex items-center gap-3">
@@ -201,7 +201,7 @@ export default async function AvailableFlightsPage({
           </div>
         )}
 
-        <div className="flex w-full gap-8">
+        <div className="flex w-full flex-col md:flex-row gap-8">
           {/* Filters Sidebar */}
           <FlightFilters
             currentSeatType={seatType}

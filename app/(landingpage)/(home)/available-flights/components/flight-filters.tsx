@@ -155,7 +155,7 @@ export default function FlightFilters({
   };
 
   return (
-    <div className="ticket-filter flex flex-col shrink-0 w-[280px] gap-6 text-flysha-off-purple">
+    <div className="ticket-filter flex flex-col shrink-0 w-full md:w-[280px] gap-6 text-flysha-off-purple">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export default function FlightFilters({
             <Plane className="w-4 h-4" />
             Airlines
           </p>
-          <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-2">
+          <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-flysha-light-purple/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-flysha-light-purple/80 transition-colors">
             {airplanes.map((airplane) => (
               <label
                 key={airplane.id}

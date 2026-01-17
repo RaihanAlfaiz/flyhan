@@ -5,12 +5,12 @@ export default function Footer() {
   return (
     <footer
       id="About"
-      className="flex flex-col justify-between mt-[150px] border-t-[6px] border-flysha-light-purple p-[100px_10px_30px]"
+      className="flex flex-col justify-between mt-[60px] md:mt-[150px] border-t-[6px] border-flysha-light-purple pt-[50px] md:pt-[100px] pb-8 px-4"
     >
-      <div className="container max-w-[1130px] mx-auto flex justify-between relative">
+      <div className="container max-w-[1130px] mx-auto flex flex-col md:flex-row justify-between relative gap-10 md:gap-0">
         <Image
           src="/assets/images/icons/Ellipse 4.png"
-          className="absolute h-[300px] -top-[45px] -left-[20px] z-0"
+          className="absolute h-[300px] -top-[45px] -left-[20px] z-0 hidden md:block" // Hide decoration on mobile
           alt="decoration"
           width={300}
           height={300}
@@ -23,7 +23,7 @@ export default function Footer() {
             height={40}
           />
         </div>
-        <div className="flex gap-[100px] z-10">
+        <div className="flex flex-col md:flex-row gap-10 md:gap-[100px] z-10">
           <div className="flex flex-col gap-5">
             <p className="font-bold text-lg">Explore</p>
             <Link
@@ -146,11 +146,11 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="mx-auto mt-[60px] z-10 flex flex-col md:flex-row items-center gap-6">
-        <p className="text-[#A0A0AC] text-sm">
+      <div className="container max-w-[1130px] mx-auto mt-[60px] z-10 flex flex-col-reverse md:flex-row items-center justify-between gap-6">
+        <p className="text-[#A0A0AC] text-sm text-center md:text-left">
           All Rights Reserved. Copyright FlyHan 2024.
         </p>
-        <div className="flex gap-6 text-sm text-[#A0A0AC] font-medium">
+        <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm text-[#A0A0AC] font-medium">
           <Link
             href="/terms"
             className="hover:text-flysha-light-purple transition-colors"

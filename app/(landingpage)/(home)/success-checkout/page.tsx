@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
+import Navbar from "../../components/navbar";
 
 export default async function SuccessCheckoutPage() {
   const { user } = await getUser();
@@ -20,7 +21,6 @@ export default async function SuccessCheckoutPage() {
   if (!latestTicket) {
     redirect("/");
   }
-
 
   const bookingTimeWindow = new Date(latestTicket.bookingDate);
   bookingTimeWindow.setSeconds(bookingTimeWindow.getSeconds() - 30);
@@ -74,31 +74,14 @@ export default async function SuccessCheckoutPage() {
         className="bg-[url('/assets/images/background/airplane.png')] bg-no-repeat bg-cover bg-left-top h-[290px] relative"
       >
         <div className="Header-content bg-gradient-to-r from-[#080318] to-[rgba(8,3,24,0)] h-[290px]">
-          <nav
-            id="Navbar"
-            className="container max-w-[1130px] mx-auto flex justify-between items-center pt-[30px]"
-          >
-            <Link href="/" className="flex items-center shrink-0">
-              <Image
-                src="/assets/images/logos/logo.svg"
-                alt="logo"
-                width={120}
-                height={40}
-              />
-            </Link>
-            <ul className="nav-menus flex gap-[30px] items-center w-fit">
-              <div className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 w-12 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center">
-                {user.name.substring(0, 2).toUpperCase()}
-              </div>
-            </ul>
-          </nav>
+          <Navbar />
           <div className="w-full h-[15px] bg-gradient-to-t from-[#080318] to-[rgba(8,3,24,0)] absolute bottom-0"></div>
         </div>
       </section>
 
       <section
         id="Content"
-        className="container max-w-[1130px] mx-auto -mt-[103px] z-10 relative pb-20"
+        className="container max-w-[1130px] mx-auto -mt-[103px] z-10 relative pb-20 px-4 md:px-0"
       >
         <div className="flex flex-col gap-10">
           {/* Title Section */}
@@ -107,7 +90,7 @@ export default async function SuccessCheckoutPage() {
               Success Checkout. <br />
               Enjoy Your Best Flight.
             </h1>
-            <div className="flex gap-[14px]">
+            <div className="flex flex-col sm:flex-row gap-[14px]">
               <Link
                 href="/"
                 className="font-bold text-flysha-black bg-flysha-light-purple rounded-full h-12 px-6 transition-all duration-300 hover:shadow-[0_10px_20px_0_#B88DFF] flex justify-center items-center"
@@ -128,10 +111,10 @@ export default async function SuccessCheckoutPage() {
             {tickets.map((ticket) => (
               <div
                 key={ticket.id}
-                className="bg-white flex flex-col rounded-[20px] w-[340px] text-flysha-black shadow-lg"
+                className="bg-white flex flex-col rounded-[20px] w-full max-w-[340px] text-flysha-black shadow-lg"
               >
                 <div className="flex flex-col p-[20px_20px_25px] border-b-2 border-dotted border-flysha-grey gap-4 relative">
-                  <div className="flex w-[300px] h-[130px] shrink-0 rounded-[14px] overflow-hidden bg-[#EDE8F5]">
+                  <div className="flex w-full h-[130px] shrink-0 rounded-[14px] overflow-hidden bg-[#EDE8F5]">
                     <img
                       src={flight.plane.image}
                       className="w-full h-full object-cover"
